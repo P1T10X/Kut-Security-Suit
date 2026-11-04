@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/pressly/goose/v3"
+	"github.com/pressly/goose/v3/lock"
 )
 
 // scratchDB creates an empty database, returns a handle to it, and drops it when the test ends.
@@ -244,5 +245,101 @@ func TestPGApplicationRole(t *testing.T) {
 	}
 	if _, err := tx.ExecContext(ctx, `TRUNCATE devices`); err == nil || !strings.Contains(err.Error(), "permission denied") {
 		t.Fatalf("TRUNCATE must be denied to kut_app, got %v", err)
+	}
+}
+
+// A database that lacks any one object the baseline creates is refused, and nothing is recorded.
+func TestBaselineRefusesDatabaseMissingAnyBaselineObject(t *testing.T) {
+	for _, c := range []struct{ name, ddl, missing string }{
+		{"policy", `DROP POLICY superuser_bypass_cases ON cases`, "policy superuser_bypass_cases on cases"},
+		{"trigger", `DROP TRIGGER trg_audit_log_no_delete ON audit_log`, "trigger trg_audit_log_no_delete on audit_log"},
+		{"column", `ALTER TABLE admins DROP COLUMN mfa_pending_secret`, "column mfa_pending_secret on admins"},
+		{"table", `DROP TABLE saved_searches`, "table saved_searches"},
+		{"forced row-level security", `ALTER TABLE devices NO FORCE ROW LEVEL SECURITY`, "row-level security (enabled and forced) on devices"},
+		{"enum label", `ALTER TYPE device_status RENAME VALUE 'QUARANTINE_PENDING' TO 'QUARANTINE_WAIT'`, "value QUARANTINE_PENDING of type device_status"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			db, ctx := scratchDB(t)
+			loadSchemaFile(t, ctx, db)
+			if _, err := db.ExecContext(ctx, c.ddl); err != nil {
+				t.Fatal(err)
+			}
+			stamped, err := Baseline(ctx, db)
+			if err == nil || stamped {
+				t.Fatalf("baseline must be refused: stamped=%v err=%v", stamped, err)
+			}
+			for _, want := range []string{c.missing, "migrate up"} {
+				if !strings.Contains(err.Error(), want) {
+					t.Errorf("error %q does not mention %q", err, want)
+				}
+			}
+			var n int
+			if err := db.QueryRowContext(ctx, `SELECT count(*) FROM goose_db_version WHERE version_id = $1`, BaselineVersion).Scan(&n); err != nil || n != 0 {
+				t.Fatalf("a refused baseline must record nothing: rows=%d err=%v", n, err)
+			}
+		})
+	}
+}
+
+// Stamping waits while another runner holds the migration lock and proceeds once it is released.
+func TestBaselineWaitsForMigrationLock(t *testing.T) {
+	db, ctx := scratchDB(t)
+	loadSchemaFile(t, ctx, db)
+	if _, err := Status(ctx, db); err != nil { // creates the version table
+		t.Fatal(err)
+	}
+
+	holder, err := db.Conn(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer holder.Close()
+	if _, err := holder.ExecContext(ctx, `SELECT pg_advisory_lock($1)`, lock.DefaultLockID); err != nil {
+		t.Fatal(err)
+	}
+
+	type result struct {
+		stamped bool
+		err     error
+	}
+	done := make(chan result, 1)
+	go func() {
+		stamped, err := stampBaseline(ctx, db)
+		done <- result{stamped, err}
+	}()
+
+	select {
+	case r := <-done:
+		t.Fatalf("stamp finished while the migration lock was held: stamped=%v err=%v", r.stamped, r.err)
+	case <-time.After(1500 * time.Millisecond):
+	}
+	if _, err := holder.ExecContext(ctx, `SELECT pg_advisory_unlock($1)`, lock.DefaultLockID); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case r := <-done:
+		if r.err != nil || !r.stamped {
+			t.Fatalf("stamp after release: stamped=%v err=%v", r.stamped, r.err)
+		}
+	case <-time.After(20 * time.Second):
+		t.Fatal("stamp did not proceed after the lock was released")
+	}
+}
+
+// Connections opened by Open carry the lock timeout, and the override is honoured.
+func TestOpenAppliesLockTimeout(t *testing.T) {
+	db, ctx := scratchDB(t)
+	var got string
+	if err := db.QueryRowContext(ctx, `SHOW lock_timeout`).Scan(&got); err != nil || got != "30s" {
+		t.Fatalf("lock_timeout = %q err=%v, want 30s", got, err)
+	}
+	t.Setenv("KUT_MIGRATE_LOCK_TIMEOUT", "7s")
+	other, err := Open(os.Getenv("KUT_DATABASE_URL"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer other.Close()
+	if err := other.QueryRowContext(ctx, `SHOW lock_timeout`).Scan(&got); err != nil || got != "7s" {
+		t.Fatalf("lock_timeout = %q err=%v, want 7s", got, err)
 	}
 }
