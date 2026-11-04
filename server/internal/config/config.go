@@ -38,6 +38,11 @@ type Config struct {
 	// PostgreSQL bağlantı dizesi (pgx DSN / URL).
 	DatabaseURL string
 
+	// MigrateDatabaseURL is the owner-role connection string used only by migrate-on-start
+	// (KUT_MIGRATE_DATABASE_URL or KUT_MIGRATE_DATABASE_URL_FILE). Empty means the migration
+	// runs with DatabaseURL.
+	MigrateDatabaseURL string
+
 	// PEM dosya yolları.
 	CACertPath     string // istemci sertifikalarını imzalayan CA
 	CAKeyPath      string
@@ -93,6 +98,12 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 	c.DatabaseURL = dbURL
+
+	migrateURL, err := secretEnv("KUT_MIGRATE_DATABASE_URL")
+	if err != nil {
+		return nil, err
+	}
+	c.MigrateDatabaseURL = migrateURL
 
 	mk, err := secretEnv("KUT_MASTER_KEY")
 	if err != nil {
@@ -210,6 +221,8 @@ func clearSecretEnv() {
 	os.Unsetenv("KUT_MASTER_KEY_OLD_FILE")
 	os.Unsetenv("KUT_DATABASE_URL")
 	os.Unsetenv("KUT_DATABASE_URL_FILE")
+	os.Unsetenv("KUT_MIGRATE_DATABASE_URL")
+	os.Unsetenv("KUT_MIGRATE_DATABASE_URL_FILE")
 }
 
 func getenv(key, def string) string {

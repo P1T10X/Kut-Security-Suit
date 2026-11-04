@@ -208,3 +208,16 @@ func TestMigrationLockIDMatchesSessionLocker(t *testing.T) {
 		t.Fatalf("goose default lock id is %d; the pinned value changed", lock.DefaultLockID)
 	}
 }
+
+// A malformed connection string must not be echoed back, because it may hold a password.
+func TestOpenErrorDoesNotEchoURL(t *testing.T) {
+	_, err := Open("postgres://owner:s3cret-pw@db.internal:notaport/kut")
+	if err == nil {
+		t.Fatal("want an error for a malformed URL")
+	}
+	for _, leak := range []string{"s3cret-pw", "owner", "db.internal"} {
+		if strings.Contains(err.Error(), leak) {
+			t.Errorf("error %q leaks %q", err, leak)
+		}
+	}
+}

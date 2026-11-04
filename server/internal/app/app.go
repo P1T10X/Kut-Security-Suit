@@ -107,6 +107,39 @@ type Backend interface {
 	VerifyAuditChain(ctx context.Context) error
 }
 
+// migrateDSN returns the connection string for migrate-on-start: the owner URL when one is
+// configured, otherwise the application URL. The owner role is the one allowed to run DDL; the
+// application role may not be.
+func migrateDSN(cfg *config.Config) string {
+	if cfg.MigrateDatabaseURL != "" {
+		return cfg.MigrateDatabaseURL
+	}
+	return cfg.DatabaseURL
+}
+
+// migrateOnStart applies pending migrations when KUT_MIGRATE_ON_START=1 and logs the database
+// role that ran them. The connection is opened and closed inside up; the caller keeps using its
+// own DSN afterwards. Neither the URL nor any part of it is logged, and a failure to read the
+// role never fails the migration.
+func migrateOnStart(ctx context.Context, cfg *config.Config,
+	up func(context.Context, string) (int, error),
+	role func(context.Context, string) (string, error)) error {
+	if os.Getenv("KUT_MIGRATE_ON_START") != "1" {
+		return nil
+	}
+	dsn := migrateDSN(cfg)
+	n, err := up(ctx, dsn)
+	if err != nil {
+		return fmt.Errorf("migrate on start: %w", err)
+	}
+	who := "unknown"
+	if r, rerr := role(ctx, dsn); rerr == nil && r != "" {
+		who = r
+	}
+	log.Printf("migrations: %d applied as role %q (KUT_MIGRATE_ON_START=1)", n, who)
+	return nil
+}
+
 // openBackend, KUT_DATABASE_URL varsa PostgreSQL, yoksa bellek-içi demo deposu
 // açar. Demo modunda bir yönetici ve kurallı bir demo politikası tohumlanır ve
 // giriş bilgileri loglanır.
@@ -114,12 +147,8 @@ func openBackend(ctx context.Context, cfg *config.Config) (Backend, error) {
 	if cfg.DatabaseURL != "" {
 		// Migrations are applied only when explicitly requested; the default start never changes the
 		// schema. Production deployments run `kutctl migrate up` as the owner role instead.
-		if os.Getenv("KUT_MIGRATE_ON_START") == "1" {
-			n, err := dbmigrate.UpDSN(ctx, cfg.DatabaseURL)
-			if err != nil {
-				return nil, fmt.Errorf("migrate on start: %w", err)
-			}
-			log.Printf("migrations: %d applied (KUT_MIGRATE_ON_START=1)", n)
+		if err := migrateOnStart(ctx, cfg, dbmigrate.UpDSN, dbmigrate.CurrentRole); err != nil {
+			return nil, err
 		}
 		store, err := db.New(ctx, cfg.DatabaseURL)
 		if err != nil {

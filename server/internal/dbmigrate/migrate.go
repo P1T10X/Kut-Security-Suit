@@ -38,7 +38,8 @@ var lockTimeoutPattern = regexp.MustCompile(`^[0-9]+(ms|s|min)?$`)
 func connConfig(dsn string, getenv func(string) string) (*pgx.ConnConfig, error) {
 	cfg, err := pgx.ParseConfig(dsn)
 	if err != nil {
-		return nil, fmt.Errorf("dbmigrate: parse database URL: %w", err)
+		// The parser error quotes the connection string, so it is dropped to keep credentials out of logs.
+		return nil, errors.New("dbmigrate: database URL is not a valid connection string")
 	}
 	if cfg.RuntimeParams == nil {
 		cfg.RuntimeParams = map[string]string{}
@@ -132,6 +133,20 @@ func UpDSN(ctx context.Context, dsn string) (int, error) {
 	defer db.Close()
 	res, err := Up(ctx, db)
 	return len(res), err
+}
+
+// CurrentRole reports the database role dsn connects as. The error never carries the URL.
+func CurrentRole(ctx context.Context, dsn string) (string, error) {
+	db, err := Open(dsn)
+	if err != nil {
+		return "", err
+	}
+	defer db.Close()
+	var role string
+	if err := db.QueryRowContext(ctx, "SELECT current_user").Scan(&role); err != nil {
+		return "", err
+	}
+	return role, nil
 }
 
 // probeCheck is one object the baseline creates. object is the table, type, index or role; name

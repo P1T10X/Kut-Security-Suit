@@ -23,8 +23,14 @@ go run ./server/cmd/kutctl migrate status    # her migrasyonun durumunu listeler
 `migrate up` tekrar çalıştırılabilir; uygulanmış migrasyonlar atlanır.
 
 - **Sunucu kendiliğinden migrasyon çalıştırmaz.** `c2`, yalnız `KUT_MIGRATE_ON_START=1`
-  verilirse açılışta `migrate up` çalıştırır (varsayılan kapalı). Üretimde `kutctl`'u sahip
-  rolüyle ayrı bir adım olarak çalıştırın.
+  verilirse açılışta `migrate up` çalıştırır (varsayılan kapalı; demo modunda da çalışmaz).
+  Üretimde `kutctl`'u sahip rolüyle ayrı bir adım olarak çalıştırın.
+- Açılıştaki migrasyon DDL gerektirir; uygulama ayrıcalıksız bir rolle bağlanıyorsa o rol bunu
+  yapamaz. Bu yüzden migrasyon bağlantısı sırayla `KUT_MIGRATE_DATABASE_URL`,
+  `KUT_MIGRATE_DATABASE_URL_FILE`, yoksa `KUT_DATABASE_URL` değerinden alınır. Sahip bağlantısı
+  yalnız migrasyon için açılıp hemen kapatılır; uygulama kendi `KUT_DATABASE_URL` bağlantısını
+  kullanmaya devam eder. Sunucu bu değişkenleri okuduktan sonra ortamdan siler ve yalnız
+  migrasyonu çalıştıran rolün adını loglar, bağlantı dizesini asla.
 - Yeni şema değişiklikleri yalnız yeni bir `NNNNN_ad.sql` migrasyonu olarak eklenir;
   uygulanmış bir migrasyon düzenlenmez. `00001_baseline.sql` geri alınamaz (`Down` bilinçli
   olarak hata verir); yedekten dönün.
@@ -35,8 +41,14 @@ go run ./server/cmd/kutctl migrate status    # her migrasyonun durumunu listeler
 
 İki yol vardır; ikisi birbirinin alternatifidir, art arda çalıştırılmaz (`up`'tan sonra baseline zaten uygulanmış olur ve `baseline`'ın yapacak işi kalmaz).
 
-- **`migrate up` (varsayılan).** Her durumda güvenlidir: baseline'ın her ifadesi idempotenttir
-  (`IF NOT EXISTS`, korumalı `DO` blokları) ve eksik nesneleri tamamlar. Politika ve trigger'ları
+- **`migrate up` (varsayılan).** Baseline'ın ifadeleri tekrar çalıştırılabilir (`IF NOT EXISTS`,
+  korumalı `DO` blokları) ve eksik tabloları, indeksleri, enum tiplerini ve politikaları
+  oluşturur. Var olan nesnelerin içini yükseltmez: `CREATE TABLE IF NOT EXISTS` eski bir tablonun
+  sütunlarını, korumalı `DO` blokları var olan bir enum'un değerlerini olduğu gibi bırakır; yalnız
+  baseline'ın açıkça `ADD COLUMN IF NOT EXISTS` ile eklediği sütunlar tamamlanır. Baseline'dan çok
+  eski bir şema bu yüzden `up` ile tam yükseltilmez. Aralığı baseline'ın `event_logs` bölümleriyle
+  çakışan ama adı farklı bir bölüm varsa `up` hata verir ve işlemi geri alır; veri değişmez, ama
+  önce çakışan bölüm giderilmelidir. Politika ve trigger'ları
   yeniden oluşturduğu için ACCESS EXCLUSIVE tablo kilidi alır; kilit beklemesi
   `KUT_MIGRATE_LOCK_TIMEOUT` (varsayılan `30s`) ile sınırlıdır.
   ```bash
@@ -120,7 +132,13 @@ go run ./server/cmd/kutctl migrate status    # list each migration and its state
 
 - **The server never migrates on its own.** `c2` runs `migrate up` at start only when
   `KUT_MIGRATE_ON_START=1` is set (default off). In production run `kutctl` as a separate
-  step with the owner role.
+  step with the owner role. It does not run in demo mode.
+- Migrating needs DDL, which an unprivileged application role cannot run. The migration therefore
+  connects with `KUT_MIGRATE_DATABASE_URL`, else `KUT_MIGRATE_DATABASE_URL_FILE`, else
+  `KUT_DATABASE_URL`. The owner connection is opened only for the migration and closed right
+  after; the application keeps using its own `KUT_DATABASE_URL`. The server removes these
+  variables from the environment once read, and logs only the name of the role that ran the
+  migration, never the connection string.
 - Schema changes are added only as a new `NNNNN_name.sql` migration; an applied migration is
   never edited. `00001_baseline.sql` cannot be rolled back (its `Down` fails on purpose);
   restore from a backup instead.
@@ -131,8 +149,14 @@ A database created from `schema.sql` moves to migrations without any data change
 
 There are two options. They are alternatives, not consecutive steps: after `up` the baseline has already run, so `baseline` has nothing left to do.
 
-- **`migrate up` (default).** Safe in every state: each statement in the baseline is idempotent
-  (`IF NOT EXISTS`, guarded `DO` blocks) and fills in whatever is missing. It recreates policies
+- **`migrate up` (default).** The baseline statements can be re-run (`IF NOT EXISTS`, guarded `DO`
+  blocks) and create any missing tables, indexes, enum types and policies. It does not upgrade
+  existing objects in place: `CREATE TABLE IF NOT EXISTS` leaves an older table's columns as they
+  are and the guarded `DO` blocks leave an existing enum's values as they are; only the columns the
+  baseline adds with an explicit `ADD COLUMN IF NOT EXISTS` are filled in. A schema much older than
+  the baseline is therefore not fully upgraded by `up`. If a differently named `event_logs`
+  partition overlaps the range of a baseline partition, `up` fails and rolls back; nothing is
+  changed, but the overlapping partition has to be resolved first. It recreates policies
   and triggers, which takes ACCESS EXCLUSIVE table locks; the wait for a lock is capped by
   `KUT_MIGRATE_LOCK_TIMEOUT` (default `30s`).
   ```bash

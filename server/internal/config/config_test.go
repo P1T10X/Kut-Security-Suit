@@ -211,3 +211,61 @@ func TestLoadStrictKeyPermissions(t *testing.T) {
 		t.Fatalf("opt-out açıkken hata dönmemeli (yalnız uyarı): %v", err)
 	}
 }
+
+func TestConfigMigrateDatabaseURL(t *testing.T) {
+	dir := t.TempDir()
+	filePath := dir + "/owner.url"
+	if err := os.WriteFile(filePath, []byte("  postgres://owner@h/kut\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		name, url, file, want string
+		bad                   bool
+	}{
+		{name: "neither", want: ""},
+		{name: "url", url: "postgres://owner@h/kut", want: "postgres://owner@h/kut"},
+		{name: "file is trimmed", file: filePath, want: "postgres://owner@h/kut"},
+		{name: "url beats file", url: "postgres://direct@h/kut", file: filePath, want: "postgres://direct@h/kut"},
+		{name: "unreadable file", file: dir + "/missing", bad: true},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			setValid(t)
+			t.Setenv("KUT_DATABASE_URL", "postgres://app@h/kut")
+			t.Setenv("KUT_MIGRATE_DATABASE_URL", c.url)
+			t.Setenv("KUT_MIGRATE_DATABASE_URL_FILE", c.file)
+			cfg, err := Load()
+			if c.bad {
+				if err == nil {
+					t.Fatal("want an error")
+				}
+				if strings.Contains(err.Error(), "postgres://") {
+					t.Errorf("error echoes a URL: %v", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if cfg.MigrateDatabaseURL != c.want {
+				t.Errorf("MigrateDatabaseURL = %q, want %q", cfg.MigrateDatabaseURL, c.want)
+			}
+			if cfg.DatabaseURL != "postgres://app@h/kut" {
+				t.Errorf("DatabaseURL changed: %q", cfg.DatabaseURL)
+			}
+		})
+	}
+}
+
+func TestConfigClearsOwnerDatabaseURLFromEnvironment(t *testing.T) {
+	setValid(t)
+	t.Setenv("KUT_MIGRATE_DATABASE_URL", "postgres://owner@h/kut")
+	t.Setenv("KUT_MIGRATE_DATABASE_URL_FILE", "/nonexistent")
+	if _, err := Load(); err != nil {
+		t.Fatal(err)
+	}
+	for _, k := range []string{"KUT_MIGRATE_DATABASE_URL", "KUT_MIGRATE_DATABASE_URL_FILE"} {
+		if v, ok := os.LookupEnv(k); ok {
+			t.Errorf("%s not cleared: %q", k, v)
+		}
+	}
+}
