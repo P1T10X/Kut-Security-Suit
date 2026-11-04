@@ -117,6 +117,9 @@ func migrateDSN(cfg *config.Config) string {
 	return cfg.DatabaseURL
 }
 
+// roleLookupTimeout bounds the post-migration role lookup so a stalled database cannot hang startup.
+var roleLookupTimeout = 10 * time.Second
+
 // migrateOnStart applies pending migrations when KUT_MIGRATE_ON_START=1 and logs the database
 // role that ran them. The connection is opened and closed inside up; the caller keeps using its
 // own DSN afterwards. Neither the URL nor any part of it is logged, and a failure to read the
@@ -133,7 +136,9 @@ func migrateOnStart(ctx context.Context, cfg *config.Config,
 		return fmt.Errorf("migrate on start: %w", err)
 	}
 	who := "unknown"
-	if r, rerr := role(ctx, dsn); rerr == nil && r != "" {
+	rctx, cancel := context.WithTimeout(ctx, roleLookupTimeout)
+	defer cancel()
+	if r, rerr := role(rctx, dsn); rerr == nil && r != "" {
 		who = r
 	}
 	log.Printf("migrations: %d applied as role %q (KUT_MIGRATE_ON_START=1)", n, who)
@@ -144,6 +149,9 @@ func migrateOnStart(ctx context.Context, cfg *config.Config,
 // açar. Demo modunda bir yönetici ve kurallı bir demo politikası tohumlanır ve
 // giriş bilgileri loglanır.
 func openBackend(ctx context.Context, cfg *config.Config) (Backend, error) {
+	// The owner URL is needed only by migrate-on-start; the config does not hold it afterwards on
+	// any path.
+	defer func() { cfg.MigrateDatabaseURL = "" }()
 	if cfg.DatabaseURL != "" {
 		// Migrations are applied only when explicitly requested; the default start never changes the
 		// schema. Production deployments run `kutctl migrate up` as the owner role instead.

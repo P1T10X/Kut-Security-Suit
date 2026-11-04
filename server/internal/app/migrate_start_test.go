@@ -7,6 +7,7 @@ import (
 	"log"
 	"strings"
 	"testing"
+	"time"
 
 	"kut.corp/suite/server/internal/config"
 )
@@ -85,4 +86,49 @@ func TestMigrateOnStartIsOptIn(t *testing.T) {
 	if err := migrateOnStart(context.Background(), &config.Config{DatabaseURL: "dsn"}, up, role); err != nil || called {
 		t.Fatalf("migration ran without KUT_MIGRATE_ON_START=1 (called=%v, err=%v)", called, err)
 	}
+}
+
+func TestMigrateOnStartRoleLookupTimesOut(t *testing.T) {
+	t.Setenv("KUT_MIGRATE_ON_START", "1")
+	prev := roleLookupTimeout
+	roleLookupTimeout = 50 * time.Millisecond
+	defer func() { roleLookupTimeout = prev }()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- migrateOnStart(context.Background(), &config.Config{DatabaseURL: "dsn"},
+			func(context.Context, string) (int, error) { return 1, nil },
+			func(ctx context.Context, _ string) (string, error) { <-ctx.Done(); return "", ctx.Err() })
+	}()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("a role lookup timeout must not fail startup: %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("startup hung on the role lookup")
+	}
+}
+
+func TestOpenBackendDropsOwnerURL(t *testing.T) {
+	t.Setenv("KUT_MIGRATE_ON_START", "")
+	t.Run("demo mode", func(t *testing.T) {
+		t.Setenv("KUT_DEMO", "1")
+		cfg := &config.Config{MigrateDatabaseURL: "postgres://owner@h/kut"}
+		if _, err := openBackend(context.Background(), cfg); err != nil {
+			t.Fatal(err)
+		}
+		if cfg.MigrateDatabaseURL != "" {
+			t.Error("owner URL still held by the config")
+		}
+	})
+	t.Run("store open fails", func(t *testing.T) {
+		cfg := &config.Config{DatabaseURL: "://invalid", MigrateDatabaseURL: "postgres://owner@h/kut"}
+		if _, err := openBackend(context.Background(), cfg); err == nil {
+			t.Fatal("want an error for an invalid application URL")
+		}
+		if cfg.MigrateDatabaseURL != "" {
+			t.Error("owner URL still held by the config")
+		}
+	})
 }
