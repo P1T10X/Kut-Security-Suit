@@ -36,7 +36,7 @@ Kurulum sonunda konsol girişi (admin@local / üretilen parola) ekrana yazılır
 Yönetim konsolu: `https://<sunucu>:8445/`
 
 > Üretim: `KUT_DATABASE_URL` ayarlayıp PostgreSQL'e geçin ve yöneticiyi
-> `tools/adminseed` ile ekleyin (bkz. `db/schema.sql`). Boş bırakılırsa
+> `tools/adminseed` ile ekleyin (bkz. `db/README.md`). Boş bırakılırsa
 > **bellek-içi demo modu** (kalıcılık yok) çalışır.
 
 ## 3. İstemci (agent) setup'ı üret
@@ -148,7 +148,7 @@ At the end of installation the console login (admin@local / generated password) 
 printed to the screen. Admin console: `https://<server>:8445/`
 
 > Production: set `KUT_DATABASE_URL` to switch to PostgreSQL and add the admin with
-> `tools/adminseed` (see `db/schema.sql`). If left empty, an **in-memory demo mode**
+> `tools/adminseed` (see `db/README.md`). If left empty, an **in-memory demo mode**
 > (no persistence) runs.
 
 ## 3. Generate the client (agent) setup

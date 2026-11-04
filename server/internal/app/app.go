@@ -52,6 +52,7 @@ import (
 	"kut.corp/suite/server/internal/controlplane"
 	"kut.corp/suite/server/internal/correlate"
 	"kut.corp/suite/server/internal/db"
+	"kut.corp/suite/server/internal/dbmigrate"
 	"kut.corp/suite/server/internal/dedup"
 	"kut.corp/suite/server/internal/detect"
 	"kut.corp/suite/server/internal/dlq"
@@ -111,6 +112,15 @@ type Backend interface {
 // giriş bilgileri loglanır.
 func openBackend(ctx context.Context, cfg *config.Config) (Backend, error) {
 	if cfg.DatabaseURL != "" {
+		// Migrations are applied only when explicitly requested; the default start never changes the
+		// schema. Production deployments run `kutctl migrate up` as the owner role instead.
+		if os.Getenv("KUT_MIGRATE_ON_START") == "1" {
+			n, err := dbmigrate.UpDSN(ctx, cfg.DatabaseURL)
+			if err != nil {
+				return nil, fmt.Errorf("migrate on start: %w", err)
+			}
+			log.Printf("migrations: %d applied (KUT_MIGRATE_ON_START=1)", n)
+		}
 		store, err := db.New(ctx, cfg.DatabaseURL)
 		if err != nil {
 			return nil, err

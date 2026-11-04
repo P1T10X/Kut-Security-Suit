@@ -113,7 +113,14 @@ jobs:
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
       - name: Proto üret
         run: make proto
-      # smoke-test.sh, KUT_DATABASE_URL görünce şemayı yükler, admin tohumlar ve
+      # Şema, gömülü goose migrasyonlarıyla kurulur (db/postgres/migrations).
+      - name: DB şeması (goose up)
+        env:
+          KUT_DATABASE_URL: postgres://kut:kut@localhost:5432/kut?sslmode=disable
+        run: |
+          go run ./server/cmd/kutctl migrate up
+          go run ./server/cmd/kutctl migrate status
+      # smoke-test.sh, KUT_DATABASE_URL görünce migrasyonları uygular, admin tohumlar ve
       # tüm zinciri GERÇEK PostgreSQL'e karşı çalıştırır (pgx yolu). psql'i apt ile
       # kurmak yerine postgres SERVİS KONTEYNERİNDEKİ psql'i docker-exec ile kullanır
       # (apt bağımlılığı yok — runner apt aynalarına dayanıklı).
@@ -131,7 +138,7 @@ jobs:
       - name: DB kiracı-duvarı entegrasyon testleri
         env:
           KUT_DATABASE_URL: postgres://kut:kut@localhost:5432/kut?sslmode=disable
-        run: go test -count=1 -run PG -v ./server/internal/db/
+        run: go test -count=1 -run PG -v ./server/internal/db/ ./server/internal/dbmigrate/
 
   enterprise-kafka:
     name: Enterprise Kafka bus (Redpanda)

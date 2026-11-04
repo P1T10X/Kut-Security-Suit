@@ -40,11 +40,11 @@ if [ -n "${KUT_DATABASE_URL:-}" ]; then
   if [ "$PSQL" = "psql" ]; then
     command -v psql >/dev/null 2>&1 || { echo "psql gerekli (DB modu)"; exit 1; }
   fi
-  echo "[2/6] PostgreSQL: şema yükle + admin tohumla"
-  # Şemayı stdin ile ver (-f yerine): docker-exec sarmalayıcısıyla da çalışır
-  # (dosya host'ta, psql konteynerde olabilir).
-  $PSQL "$KUT_DATABASE_URL" -v ON_ERROR_STOP=1 -q < db/schema.sql \
-    && pass "şema yüklendi (db/schema.sql)" || { fail "şema yüklenemedi"; exit 1; }
+  echo "[2/6] PostgreSQL: migrasyonları uygula + admin tohumla"
+  # Şema, gömülü goose migrasyonlarıyla kurulur (yeniden çalıştırmak zararsızdır).
+  # psql yalnız yönetici tohumlaması için gerekir (stdin ile; docker-exec ile de çalışır).
+  go run ./server/cmd/kutctl migrate up \
+    && pass "migrasyonlar uygulandı (db/postgres/migrations)" || { fail "migrasyonlar uygulanamadı"; exit 1; }
   go run ./tools/adminseed -email admin@local -password smoke1234 -role ADMIN -name Smoke \
     | tail -n +2 | $PSQL "$KUT_DATABASE_URL" -v ON_ERROR_STOP=1 -q \
     && pass "yönetici tohumlandı (Argon2id)" || fail "admin tohumlanamadı"

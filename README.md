@@ -92,7 +92,7 @@ make tidy
 make build        # bin/c2, bin/agent, bin/watchdog
 
 # 4) Veritabanı şemasını kur
-psql -U postgres -d kut -f db/schema.sql
+KUT_DATABASE_URL="postgres://postgres@localhost/kut" go run ./server/cmd/kutctl migrate up   # bkz. db/README.md
 ```
 
 ## Kurulum ve dağıtım ✅
@@ -240,7 +240,7 @@ make tidy
 make build        # bin/c2, bin/agent, bin/watchdog
 
 # 4) Install the database schema
-psql -U postgres -d kut -f db/schema.sql
+KUT_DATABASE_URL="postgres://postgres@localhost/kut" go run ./server/cmd/kutctl migrate up   # see db/README.md
 ```
 
 ## Installation & deployment ✅

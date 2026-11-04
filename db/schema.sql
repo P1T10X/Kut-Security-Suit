@@ -1,6 +1,9 @@
 -- =============================================================================
 -- KUT Security Suite — PostgreSQL Şeması (düzeltilmiş)
 -- =============================================================================
+-- Sürümlü yol: db/postgres/migrations/00001_baseline.sql bu dosyanın goose notasyonlu
+-- eşdeğeridir (aynı ifadeler); yeni şema değişiklikleri yalnız migrasyon olarak eklenir.
+-- =============================================================================
 -- İnceleme bulgularına göre orijinal taslaktan farklar:
 --   #1  Eksik `policies` tablosu eklendi; kırık FK düzeltildi.
 --   #1  event_logs artık ZAMAN-BAZLI PARTITIONING kullanır ve sorgulanabilir
@@ -26,35 +29,60 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ---------------------------------------------------------------------------
 -- ENUM TİPLERİ
 -- ---------------------------------------------------------------------------
-CREATE TYPE device_status AS ENUM (
+DO $$
+BEGIN
+    CREATE TYPE device_status AS ENUM (
     'PENDING_ENROLLMENT', 'ACTIVE', 'OFFLINE', 'QUARANTINE_PENDING', 'QUARANTINED', 'UNINSTALLED'
 );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END
+$$;
 -- QUARANTINE_PENDING: karantina komutu kuyruğa alındı (DESIRED) ama cihaz henüz gerçek
 -- izolasyonu ONAYLAMADI. Effective 'QUARANTINED', yalnız ajan komut SUCCESS bildirince
 -- verilir (desired≠effective). Mevcut DB'ye ekleme: ALTER TYPE device_status
 -- ADD VALUE IF NOT EXISTS 'QUARANTINE_PENDING' BEFORE 'QUARANTINED';
 
-CREATE TYPE event_category AS ENUM (
+DO $$
+BEGIN
+    CREATE TYPE event_category AS ENUM (
     'SYSTEM', 'SECURITY', 'NETWORK_DISCOVERY', 'POLICY_VIOLATION', 'AGENT_UPDATE', 'PROCESS', 'NETWORK_CONN'
 );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END
+$$;
 
-CREATE TYPE severity AS ENUM (
+DO $$
+BEGIN
+    CREATE TYPE severity AS ENUM (
     'INFO', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'
 );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END
+$$;
 
-CREATE TYPE admin_role AS ENUM ('VIEWER', 'OPERATOR', 'ADMIN');
+DO $$
+BEGIN
+    CREATE TYPE admin_role AS ENUM ('VIEWER', 'OPERATOR', 'ADMIN');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END
+$$;
 
-CREATE TYPE command_type AS ENUM (
+DO $$
+BEGIN
+    CREATE TYPE command_type AS ENUM (
     'QUARANTINE', 'UNQUARANTINE', 'RUN_SIGNED_SCRIPT', 'UNINSTALL', 'COLLECT_DIAGNOSTICS', 'COLLECT_FILE',
     'LOCK', 'RESTART', 'WIPE'
 );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END
+$$;
 
 -- ---------------------------------------------------------------------------
 -- CİHAZLAR
 --   * Hassas serbest-metin alanları pgcrypto ile şifreli (BYTEA).
 --   * *_bidx sütunları HMAC(keyed) blind index'tir — düz SHA-256 DEĞİL (#2).
 -- ---------------------------------------------------------------------------
-CREATE TABLE devices (
+CREATE TABLE IF NOT EXISTS devices (
     id                     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     hostname_encrypted     BYTEA NOT NULL,
     mac_address_encrypted  BYTEA NOT NULL,
@@ -75,15 +103,15 @@ CREATE TABLE devices (
     created_at             TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_devices_status    ON devices (status);
-CREATE INDEX idx_devices_last_seen ON devices (last_seen);
+CREATE INDEX IF NOT EXISTS idx_devices_status    ON devices (status);
+CREATE INDEX IF NOT EXISTS idx_devices_last_seen ON devices (last_seen);
 
 -- ---------------------------------------------------------------------------
 -- PKI / ENROLLMENT (#6 bootstrap)
 -- ---------------------------------------------------------------------------
 -- Tek kullanımlık, süreli kayıt token'ları. token_hash = HMAC(token) saklanır,
 -- ham token asla DB'de tutulmaz.
-CREATE TABLE enrollment_tokens (
+CREATE TABLE IF NOT EXISTS enrollment_tokens (
     id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     token_hash  BYTEA NOT NULL UNIQUE,
     created_by  UUID,                       -- admins.id (aşağıda FK)
@@ -93,11 +121,11 @@ CREATE TABLE enrollment_tokens (
     used_at     TIMESTAMPTZ,                -- NULL => henüz kullanılmadı
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_enroll_tokens_expiry ON enrollment_tokens (expires_at)
+CREATE INDEX IF NOT EXISTS idx_enroll_tokens_expiry ON enrollment_tokens (expires_at)
     WHERE used_at IS NULL;
 
 -- İmzalanmış istemci sertifikaları ve iptal durumu (mTLS + revocation).
-CREATE TABLE agent_certificates (
+CREATE TABLE IF NOT EXISTS agent_certificates (
     id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     device_id     UUID NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
     serial_number NUMERIC NOT NULL UNIQUE,   -- X.509 seri no
@@ -108,14 +136,14 @@ CREATE TABLE agent_certificates (
     revoke_reason VARCHAR(100),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_agent_certs_device ON agent_certificates (device_id);
-CREATE INDEX idx_agent_certs_active ON agent_certificates (device_id)
+CREATE INDEX IF NOT EXISTS idx_agent_certs_device ON agent_certificates (device_id);
+CREATE INDEX IF NOT EXISTS idx_agent_certs_active ON agent_certificates (device_id)
     WHERE revoked_at IS NULL;
 
 -- ---------------------------------------------------------------------------
 -- POLİTİKALAR (#1 — eksik tablo eklendi)
 -- ---------------------------------------------------------------------------
-CREATE TABLE policies (
+CREATE TABLE IF NOT EXISTS policies (
     id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name        VARCHAR(150) NOT NULL,
     description TEXT,
@@ -126,7 +154,7 @@ CREATE TABLE policies (
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE policy_rules (
+CREATE TABLE IF NOT EXISTS policy_rules (
     id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     policy_id    UUID NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
     type         VARCHAR(50) NOT NULL,       -- APP_TIME_BLOCK | APP_BLOCK_ALWAYS | NETWORK_RULE
@@ -136,10 +164,10 @@ CREATE TABLE policy_rules (
     active_days  INT[] NOT NULL DEFAULT '{1,2,3,4,5,6,0}',  -- 0=Pazar
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_policy_rules_policy ON policy_rules (policy_id);
+CREATE INDEX IF NOT EXISTS idx_policy_rules_policy ON policy_rules (policy_id);
 
 -- Hangi cihaz(lar)a hangi politika atanmış (grup yerine önce doğrudan atama).
-CREATE TABLE device_policies (
+CREATE TABLE IF NOT EXISTS device_policies (
     device_id  UUID NOT NULL REFERENCES devices(id)  ON DELETE CASCADE,
     policy_id  UUID NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
     PRIMARY KEY (device_id, policy_id)
@@ -148,7 +176,7 @@ CREATE TABLE device_policies (
 -- ---------------------------------------------------------------------------
 -- OTA SÜRÜMLERİ (#4 — imza, yalnız hash değil)
 -- ---------------------------------------------------------------------------
-CREATE TABLE ota_releases (
+CREATE TABLE IF NOT EXISTS ota_releases (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     version         VARCHAR(50) NOT NULL UNIQUE,
     os_platform     VARCHAR(20) NOT NULL,     -- "windows" | "linux"
@@ -165,7 +193,7 @@ CREATE TABLE ota_releases (
 --   Gizlilik at-rest şifreleme ile; içerik JSONB olarak sorgulanabilir kalır.
 --   PostgreSQL 12+ native RANGE partitioning (created_at üzerinde).
 -- ---------------------------------------------------------------------------
-CREATE TABLE event_logs (
+CREATE TABLE IF NOT EXISTS event_logs (
     id          UUID NOT NULL DEFAULT uuid_generate_v4(),
     device_id   UUID NOT NULL,               -- FK partition'lı tabloda pratik
                                              -- nedenlerle uygulama katmanında doğrulanır
@@ -180,17 +208,17 @@ CREATE TABLE event_logs (
 ) PARTITION BY RANGE (created_at);
 
 -- Sorgu erişim desenleri için indeksler (partition'lara miras kalır).
-CREATE INDEX idx_event_logs_device   ON event_logs (device_id, created_at DESC);
-CREATE INDEX idx_event_logs_category ON event_logs (category, created_at DESC);
-CREATE INDEX idx_event_logs_severity ON event_logs (severity, created_at DESC)
+CREATE INDEX IF NOT EXISTS idx_event_logs_device   ON event_logs (device_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_event_logs_category ON event_logs (category, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_event_logs_severity ON event_logs (severity, created_at DESC)
     WHERE severity IN ('HIGH', 'CRITICAL');
-CREATE INDEX idx_event_logs_details  ON event_logs USING GIN (details);
+CREATE INDEX IF NOT EXISTS idx_event_logs_details  ON event_logs USING GIN (details);
 
 -- Örnek başlangıç partition'ları. Üretimde pg_partman veya cron ile otomatik
 -- oluşturulmalı ve saklama süresi (KVKK #11) ile eski partition'lar DROP edilmeli.
-CREATE TABLE event_logs_2026_08 PARTITION OF event_logs
+CREATE TABLE IF NOT EXISTS event_logs_2026_08 PARTITION OF event_logs
     FOR VALUES FROM ('2026-08-01') TO ('2026-09-01');
-CREATE TABLE event_logs_2026_09 PARTITION OF event_logs
+CREATE TABLE IF NOT EXISTS event_logs_2026_09 PARTITION OF event_logs
     FOR VALUES FROM ('2026-09-01') TO ('2026-10-01');
 
 -- Olay triyaj durumu (alarm yaşam-döngüsü): yüksek-önem olayları SOC analisti
@@ -202,7 +230,7 @@ CREATE TABLE event_logs_2026_09 PARTITION OF event_logs
 -- denetim iziyle (WriteAudit) sağlam tutulur; buradaki admin_id yalnız görüntü.
 -- status nullable: bir olay yalnız atanabilir/notlanabilir (henüz ack'lenmeden) —
 -- vaka yönetimi (#9). assignee: sorumlu analist; note: serbest triyaj notu.
-CREATE TABLE event_ack (
+CREATE TABLE IF NOT EXISTS event_ack (
     event_id   TEXT PRIMARY KEY,
     tenant_id  TEXT NOT NULL DEFAULT 'default', -- KİRACI kapsamı (çok-kiracılı izolasyon)
     status     TEXT CHECK (status IS NULL OR status IN ('ACKNOWLEDGED', 'RESOLVED')),
@@ -211,12 +239,12 @@ CREATE TABLE event_ack (
     admin_id   UUID,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_event_ack_tenant ON event_ack (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_event_ack_tenant ON event_ack (tenant_id);
 
 -- ---------------------------------------------------------------------------
 -- AĞ KEŞFİ (Network Discovery)
 -- ---------------------------------------------------------------------------
-CREATE TABLE discovered_hosts (
+CREATE TABLE IF NOT EXISTS discovered_hosts (
     id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     reporter_device  UUID REFERENCES devices(id) ON DELETE SET NULL,
     mac_bidx         BYTEA NOT NULL,          -- HMAC blind index (#2)
@@ -227,14 +255,14 @@ CREATE TABLE discovered_hosts (
     last_seen        TIMESTAMPTZ NOT NULL DEFAULT now(),
     is_authorized    BOOLEAN NOT NULL DEFAULT FALSE
 );
-CREATE INDEX idx_discovered_mac ON discovered_hosts (mac_bidx);
+CREATE INDEX IF NOT EXISTS idx_discovered_mac ON discovered_hosts (mac_bidx);
 
 -- ---------------------------------------------------------------------------
 -- CİHAZ KOMUT KUYRUĞU
 --   Admin'in ürettiği anlık komutlar (karantina vb.) burada bekler; heartbeat
 --   ile ajana teslim edilir ve delivered_at işaretlenir (en-fazla-bir-kez).
 -- ---------------------------------------------------------------------------
-CREATE TABLE device_commands (
+CREATE TABLE IF NOT EXISTS device_commands (
     id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     device_id     UUID NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
     type          command_type NOT NULL,
@@ -251,13 +279,13 @@ CREATE TABLE device_commands (
     attempt_count INT NOT NULL DEFAULT 0      -- teslim denemesi sayısı
 );
 -- Bekleyen = hiç teslim edilmemiş VEYA onaylanmamış+kirası dolmuş (redelivery).
-CREATE INDEX idx_device_commands_pending ON device_commands (device_id, created_at)
+CREATE INDEX IF NOT EXISTS idx_device_commands_pending ON device_commands (device_id, created_at)
     WHERE acked_at IS NULL;
 
 -- Adli/IR dosya toplama artefaktları: COLLECT_FILE komutuyla ajandan yüklenen
 -- dosya içeriği (boyut-sınırlı, uygulama katmanında). content ham baytlar;
 -- hassas olabileceğinden erişim RBAC + denetim iziyle korunur.
-CREATE TABLE artifacts (
+CREATE TABLE IF NOT EXISTS artifacts (
     id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     device_id    UUID NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
     command_id   UUID,
@@ -267,17 +295,17 @@ CREATE TABLE artifacts (
     content      BYTEA NOT NULL,
     collected_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_artifacts_device ON artifacts (device_id, collected_at DESC);
+CREATE INDEX IF NOT EXISTS idx_artifacts_device ON artifacts (device_id, collected_at DESC);
 -- Saklama budaması (retention.PurgeArtifactsOlderThan): WHERE collected_at < cutoff.
 -- Cihaz-index'in başı device_id olduğundan bu taramaya hizmet edemez; ayrı index.
-CREATE INDEX idx_artifacts_collected ON artifacts (collected_at);
+CREATE INDEX IF NOT EXISTS idx_artifacts_collected ON artifacts (collected_at);
 
 -- Delil GÖZETİM ZİNCİRİ — EKLE-YALNIZ, hash-zincirli. Genesis (seq=0, COLLECTED)
 -- artefakt satırından TÜRETİLİR (saklanmaz); buraya toplama SONRASI olaylar (ACCESSED/
 -- TRANSFERRED/SEALED, seq>=1) yazılır. Her kayıt bir öncekinin hash'ini (prev_hash)
 -- içerir; UNIQUE(evidence_id, seq) çatallanmayı (eşzamanlı ekleme) engeller. evidence_id
 -- = artefakt id (FK yerine uygulama katmanında doğrulanır; partition/silme esnekliği).
-CREATE TABLE evidence_custody (
+CREATE TABLE IF NOT EXISTS evidence_custody (
     evidence_id UUID NOT NULL,                  -- artefakt kimliği
     seq         INTEGER NOT NULL,               -- zincir sırası (genesis=0 türetilir; kalıcı >=1)
     actor       TEXT NOT NULL,                  -- eylemi yapan (admin e-posta/kimliği)
@@ -293,7 +321,7 @@ CREATE TABLE evidence_custody (
 -- AD) SCIM üzerinden kullanıcı yaşam-döngüsünü (create/replace/deactivate) yönetir.
 -- Çekirdek alanlar sorgulanabilir sütunlarda; tam SCIM kaynağı `doc` JSONB'de (RFC 7643
 -- tel-uyumu için esneklik). Deactivate soft-delete'tir (active=false).
-CREATE TABLE scim_users (
+CREATE TABLE IF NOT EXISTS scim_users (
     id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id  TEXT NOT NULL DEFAULT 'default', -- KİRACI kapsamı (çok-kiracılı izolasyon)
     user_name  TEXT NOT NULL,
@@ -311,7 +339,7 @@ CREATE TABLE scim_users (
 -- + append-only zaman çizelgesi) `doc` JSONB'de; çekirdek alanlar sorgulanabilir
 -- sütunlarda. id metindir (ör. "case-<incidentID>" ile incident'e bağlanır). Kiracı
 -- kapsamı (tenant_id, id) bileşik anahtarıyla — id kiracılar arası yeniden kullanılabilir.
-CREATE TABLE cases (
+CREATE TABLE IF NOT EXISTS cases (
     id         TEXT NOT NULL,
     tenant_id  TEXT NOT NULL DEFAULT 'default',
     status     TEXT NOT NULL,
@@ -323,14 +351,14 @@ CREATE TABLE cases (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (tenant_id, id)
 );
-CREATE INDEX idx_cases_tenant_created ON cases (tenant_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_cases_tenant_created ON cases (tenant_id, created_at);
 
 -- REMEDIATION DOĞRULAMA (verify): DETECTION→RESPONSE→VERIFICATION check'leri. Bir bulgu
 -- "çözüldü" kapatılmadan önce kaynak tespit kuralı taze pencerede yeniden ölçülür. Tam
 -- kaynak (factors/baseline/residual/outcome/pencere) `doc` JSONB'de; çekirdek alanlar
 -- sorgulanabilir sütunlarda. Kiracı kapsamı (tenant_id, id) bileşik anahtarıyla — id
 -- kiracılar arası yeniden kullanılabilir. Cluster-safe: okumalar doğrudan DB'den.
-CREATE TABLE verify_checks (
+CREATE TABLE IF NOT EXISTS verify_checks (
     id         TEXT NOT NULL,
     tenant_id  TEXT NOT NULL DEFAULT 'default',
     device_id  TEXT NOT NULL DEFAULT '',
@@ -341,13 +369,13 @@ CREATE TABLE verify_checks (
     opened_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (tenant_id, id)
 );
-CREATE INDEX idx_verify_tenant_opened ON verify_checks (tenant_id, opened_at);
+CREATE INDEX IF NOT EXISTS idx_verify_tenant_opened ON verify_checks (tenant_id, opened_at);
 
 -- YÖNETİLEN API TOKEN'LARI: metrics/ingest uçları için statik ortam token'larına
 -- alternatif — oluşturma/İPTAL, SÜRE (expires_at) ve KAPSAM (scope) ile. Yalnız
 -- SHA-256 özeti saklanır (düz sır yalnız oluşturmada döner). Rotation = yeni token
 -- üret + eskiyi iptal et.
-CREATE TABLE tokens (
+CREATE TABLE IF NOT EXISTS tokens (
     id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     token_hash   TEXT NOT NULL UNIQUE,       -- sha256(hex) düz-sır özeti
     scope        TEXT NOT NULL,              -- 'metrics' | 'ingest'
@@ -357,13 +385,13 @@ CREATE TABLE tokens (
     revoked_at   TIMESTAMPTZ,               -- NULL => etkin
     last_used_at TIMESTAMPTZ
 );
-CREATE INDEX idx_tokens_active ON tokens (scope) WHERE revoked_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_tokens_active ON tokens (scope) WHERE revoked_at IS NULL;
 
 -- MSP MÜŞTERİLERİ (Managed Security Service Provider). Bir MSP birçok müşteriye
 -- hizmet verir; her müşteri bir kiracıya (tenant) eşlenir. Deactivate soft-delete'tir.
 -- Kullanım/faturalama ölçümü çalışma-zamanı sayaçlarıdır (kalıcı değil); burada yalnız
 -- müşteri kaydı + müşteri-başına yapılandırma saklanır.
-CREATE TABLE msp_customers (
+CREATE TABLE IF NOT EXISTS msp_customers (
     id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name           TEXT NOT NULL,
     tenant_id      TEXT NOT NULL,
@@ -373,12 +401,12 @@ CREATE TABLE msp_customers (
     policies       JSONB NOT NULL DEFAULT '[]'::jsonb,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_msp_customers_tenant ON msp_customers (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_msp_customers_tenant ON msp_customers (tenant_id);
 
 -- ---------------------------------------------------------------------------
 -- YÖNETİCİLER (RBAC) + DENETİM İZİ (#10)
 -- ---------------------------------------------------------------------------
-CREATE TABLE admins (
+CREATE TABLE IF NOT EXISTS admins (
     id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email         VARCHAR(255) NOT NULL UNIQUE,
     display_name  VARCHAR(150),
@@ -396,17 +424,29 @@ CREATE TABLE admins (
 ALTER TABLE admins ADD COLUMN IF NOT EXISTS mfa_pending_secret BYTEA;
 
 -- FK'ları burada bağla (admins tablosu artık mevcut).
-ALTER TABLE enrollment_tokens
-    ADD CONSTRAINT fk_enroll_token_admin
-    FOREIGN KEY (created_by) REFERENCES admins(id) ON DELETE SET NULL;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_enroll_token_admin') THEN
+        ALTER TABLE enrollment_tokens
+            ADD CONSTRAINT fk_enroll_token_admin
+            FOREIGN KEY (created_by) REFERENCES admins(id) ON DELETE SET NULL;
+    END IF;
+END
+$$;
 
-ALTER TABLE device_commands
-    ADD CONSTRAINT fk_device_command_admin
-    FOREIGN KEY (issued_by) REFERENCES admins(id) ON DELETE SET NULL;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_device_command_admin') THEN
+        ALTER TABLE device_commands
+            ADD CONSTRAINT fk_device_command_admin
+            FOREIGN KEY (issued_by) REFERENCES admins(id) ON DELETE SET NULL;
+    END IF;
+END
+$$;
 
 -- Kim, neyi, ne zaman yaptı — özellikle uninstall OTP üretimi gibi hassas
 -- aksiyonların değiştirilemez kaydı.
-CREATE TABLE audit_log (
+CREATE TABLE IF NOT EXISTS audit_log (
     id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     admin_id    UUID REFERENCES admins(id) ON DELETE SET NULL,
     tenant_id   VARCHAR(63) NOT NULL DEFAULT '',
@@ -421,8 +461,8 @@ CREATE TABLE audit_log (
     prev_hash   BYTEA,
     entry_hash  BYTEA
 );
-CREATE INDEX idx_audit_admin  ON audit_log (admin_id, created_at DESC);
-CREATE INDEX idx_audit_target ON audit_log (target_type, target_id);
+CREATE INDEX IF NOT EXISTS idx_audit_admin  ON audit_log (admin_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_target ON audit_log (target_type, target_id);
 -- Mevcut kurulum için migrasyon (H2): tenant_id sütunu tenant-öncesi sürümlerde
 -- YOKTU; eklenmezse WriteAudit/VerifyAuditChain sorguları (SELECT ... tenant_id)
 -- hata verir ve denetim yazımı fail-closed durur. DEFAULT '' ile eklenir;
@@ -436,7 +476,7 @@ ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(63) NOT NULL DE
 -- WIPE geri döndürülemez olduğundan, KUT_WIPE_DUAL_CONTROL=1 iken bir ADMIN talep
 -- eder ve FARKLI bir ADMIN onaylayana dek komut kuyruğa GİRMEZ. Tek ele geçirilmiş/
 -- kötü-niyetli ADMIN filoyu silemez.
-CREATE TABLE pending_wipes (
+CREATE TABLE IF NOT EXISTS pending_wipes (
     device_id    UUID PRIMARY KEY REFERENCES devices(id) ON DELETE CASCADE,
     requested_by UUID NOT NULL REFERENCES admins(id),
     reason       TEXT,
@@ -448,7 +488,7 @@ CREATE TABLE pending_wipes (
 -- ---------------------------------------------------------------------------
 -- Aynı cihaz + kural için bir zaman penceresindeki tespitler tek bir incident'e
 -- katlanır (alarm-fırtınası bastırma + gruplama). count/last_seen güncellenir.
-CREATE TABLE incidents (
+CREATE TABLE IF NOT EXISTS incidents (
     id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     device_id   UUID REFERENCES devices(id) ON DELETE CASCADE,
     corr_key    TEXT NOT NULL,
@@ -461,18 +501,18 @@ CREATE TABLE incidents (
     last_seen   TIMESTAMPTZ NOT NULL DEFAULT now(),
     status      TEXT NOT NULL DEFAULT 'OPEN'
 );
-CREATE INDEX idx_incidents_last ON incidents (last_seen DESC);
+CREATE INDEX IF NOT EXISTS idx_incidents_last ON incidents (last_seen DESC);
 
 -- Kayıtlı aramalar (SIEM): analistlerin kalıcılaştırdığı threat-hunting sorguları.
 -- filter, /api/hunt isteği JSON'udur (mode + EventFilter alanları).
-CREATE TABLE saved_searches (
+CREATE TABLE IF NOT EXISTS saved_searches (
     id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name        TEXT NOT NULL,
     filter      JSONB NOT NULL,
     created_by  UUID REFERENCES admins(id) ON DELETE SET NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_saved_searches_created ON saved_searches (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_saved_searches_created ON saved_searches (created_at DESC);
 
 -- =============================================================================
 -- TENANT İZOLASYONU (ROW-LEVEL SECURITY)
@@ -502,9 +542,11 @@ $$;
 -- event_logs
 ALTER TABLE event_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_logs FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation_event_logs ON event_logs;
 CREATE POLICY tenant_isolation_event_logs ON event_logs
     USING (tenant_id = current_setting('app.tenant_id', true))
     WITH CHECK (tenant_id = current_setting('app.tenant_id', true));
+DROP POLICY IF EXISTS superuser_bypass_event_logs ON event_logs;
 CREATE POLICY superuser_bypass_event_logs ON event_logs
     TO kut_admin
     USING (true);
@@ -512,9 +554,11 @@ CREATE POLICY superuser_bypass_event_logs ON event_logs
 -- event_ack
 ALTER TABLE event_ack ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_ack FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation_event_ack ON event_ack;
 CREATE POLICY tenant_isolation_event_ack ON event_ack
     USING (tenant_id = current_setting('app.tenant_id', true))
     WITH CHECK (tenant_id = current_setting('app.tenant_id', true));
+DROP POLICY IF EXISTS superuser_bypass_event_ack ON event_ack;
 CREATE POLICY superuser_bypass_event_ack ON event_ack
     TO kut_admin
     USING (true);
@@ -522,9 +566,11 @@ CREATE POLICY superuser_bypass_event_ack ON event_ack
 -- scim_users
 ALTER TABLE scim_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE scim_users FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation_scim_users ON scim_users;
 CREATE POLICY tenant_isolation_scim_users ON scim_users
     USING (tenant_id = current_setting('app.tenant_id', true))
     WITH CHECK (tenant_id = current_setting('app.tenant_id', true));
+DROP POLICY IF EXISTS superuser_bypass_scim_users ON scim_users;
 CREATE POLICY superuser_bypass_scim_users ON scim_users
     TO kut_admin
     USING (true);
@@ -532,9 +578,11 @@ CREATE POLICY superuser_bypass_scim_users ON scim_users
 -- cases
 ALTER TABLE cases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cases FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation_cases ON cases;
 CREATE POLICY tenant_isolation_cases ON cases
     USING (tenant_id = current_setting('app.tenant_id', true))
     WITH CHECK (tenant_id = current_setting('app.tenant_id', true));
+DROP POLICY IF EXISTS superuser_bypass_cases ON cases;
 CREATE POLICY superuser_bypass_cases ON cases
     TO kut_admin
     USING (true);
@@ -542,9 +590,11 @@ CREATE POLICY superuser_bypass_cases ON cases
 -- verify_checks
 ALTER TABLE verify_checks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE verify_checks FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation_verify_checks ON verify_checks;
 CREATE POLICY tenant_isolation_verify_checks ON verify_checks
     USING (tenant_id = current_setting('app.tenant_id', true))
     WITH CHECK (tenant_id = current_setting('app.tenant_id', true));
+DROP POLICY IF EXISTS superuser_bypass_verify_checks ON verify_checks;
 CREATE POLICY superuser_bypass_verify_checks ON verify_checks
     TO kut_admin
     USING (true);
@@ -552,9 +602,11 @@ CREATE POLICY superuser_bypass_verify_checks ON verify_checks
 -- msp_customers
 ALTER TABLE msp_customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE msp_customers FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation_msp_customers ON msp_customers;
 CREATE POLICY tenant_isolation_msp_customers ON msp_customers
     USING (tenant_id = current_setting('app.tenant_id', true))
     WITH CHECK (tenant_id = current_setting('app.tenant_id', true));
+DROP POLICY IF EXISTS superuser_bypass_msp_customers ON msp_customers;
 CREATE POLICY superuser_bypass_msp_customers ON msp_customers
     TO kut_admin
     USING (true);
@@ -562,9 +614,11 @@ CREATE POLICY superuser_bypass_msp_customers ON msp_customers
 -- devices
 ALTER TABLE devices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE devices FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation_devices ON devices;
 CREATE POLICY tenant_isolation_devices ON devices
     USING (tenant_id = current_setting('app.tenant_id', true))
     WITH CHECK (tenant_id = current_setting('app.tenant_id', true));
+DROP POLICY IF EXISTS superuser_bypass_devices ON devices;
 CREATE POLICY superuser_bypass_devices ON devices
     TO kut_admin
     USING (true);
@@ -572,9 +626,11 @@ CREATE POLICY superuser_bypass_devices ON devices
 -- incidents
 ALTER TABLE incidents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE incidents FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation_incidents ON incidents;
 CREATE POLICY tenant_isolation_incidents ON incidents
     USING (tenant_id = current_setting('app.tenant_id', true))
     WITH CHECK (tenant_id = current_setting('app.tenant_id', true));
+DROP POLICY IF EXISTS superuser_bypass_incidents ON incidents;
 CREATE POLICY superuser_bypass_incidents ON incidents
     TO kut_admin
     USING (true);
@@ -595,11 +651,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_custody_no_update
+CREATE OR REPLACE TRIGGER trg_custody_no_update
     BEFORE UPDATE ON evidence_custody
     FOR EACH ROW EXECUTE FUNCTION prevent_custody_mutation();
 
-CREATE TRIGGER trg_custody_no_delete
+CREATE OR REPLACE TRIGGER trg_custody_no_delete
     BEFORE DELETE ON evidence_custody
     FOR EACH ROW EXECUTE FUNCTION prevent_custody_mutation();
 
@@ -617,11 +673,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_audit_log_no_update
+CREATE OR REPLACE TRIGGER trg_audit_log_no_update
     BEFORE UPDATE ON audit_log
     FOR EACH ROW EXECUTE FUNCTION prevent_audit_log_mutation();
 
-CREATE TRIGGER trg_audit_log_no_delete
+CREATE OR REPLACE TRIGGER trg_audit_log_no_delete
     BEFORE DELETE ON audit_log
     FOR EACH ROW EXECUTE FUNCTION prevent_audit_log_mutation();
 
@@ -629,8 +685,8 @@ CREATE TRIGGER trg_audit_log_no_delete
 -- Kiracı Duvarı II YÜKSELTME BLOĞU (idempotent, yeniden çalıştırılabilir)
 -- =============================================================================
 -- Taze kurulumda yukarıdaki CREATE TABLE'lar zaten son biçimdedir ve bu blok
--- no-op'tur. MEVCUT kurulumlarda şema dosyası bütünüyle yeniden çalıştırılamaz
--- (CREATE TYPE/TABLE); yalnız BEGIN/END arasını uygulayın:
+-- no-op'tur. Dosyanın tamamı da yeniden çalıştırılabilirdir (her ifade idempotent);
+-- eski bir kurulumda yalnız BEGIN/END arasını uygulamak da yeterlidir:
 --   sed -n '/^-- BEGIN TENANT-MAC-UPGRADE/,/^-- END TENANT-MAC-UPGRADE/p' db/schema.sql | psql "$KUT_DATABASE_URL"
 -- BEGIN TENANT-MAC-UPGRADE
 
