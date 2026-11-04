@@ -5,7 +5,7 @@
 # KUT Security Suite — Kurumsal Uç Nokta Güvenliği ve Ajan Yönetim Sistemi
 # KUT Security Suite — Corporate Endpoint Security & Agent Management System
 
-[![CI](https://github.com/cihanuralkaya/Kut-Security-Suit/actions/workflows/ci.yml/badge.svg)](https://github.com/cihanuralkaya/Kut-Security-Suit/actions/workflows/ci.yml)
+[![CI](https://github.com/P1T10X/Kut-Security-Suit/actions/workflows/ci.yml/badge.svg)](https://github.com/P1T10X/Kut-Security-Suit/actions/workflows/ci.yml)
 
 **Türkçe** · [English](#english)
 
