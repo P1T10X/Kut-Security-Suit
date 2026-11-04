@@ -182,7 +182,7 @@ func TestAuditChainHashIncludesTenant(t *testing.T) {
 // TestAuditChainHashEmptyTenantBackwardCompatible, boş tenant_id'nin tenant-öncesi
 // (tenant alanı hiç yazılmayan) hash biçimiyle BİREBİR aynı baytları ürettiğini
 // doğrular. Böylece audit_log'a tenant_id sütunu eklendikten (ADD COLUMN DEFAULT ”)
-// sonra mevcut tek-tenant denetim zincirleri re-hash GEREKMEDEN doğrulanabilir (H2).
+// sonra mevcut tek-tenant denetim zincirleri re-hash GEREKMEDEN doğrulanabilir.
 func TestAuditChainHashEmptyTenantBackwardCompatible(t *testing.T) {
 	prev := []byte("prev-hash")
 	adminRef := "admin@test.com"
@@ -206,7 +206,7 @@ func TestAuditChainHashEmptyTenantBackwardCompatible(t *testing.T) {
 	want := h.Sum(nil)
 
 	if !bytes.Equal(got, want) {
-		t.Fatal("boş tenant_id tenant-öncesi hash biçimiyle eşleşmeli — mevcut zincirler re-hash gerektirmemeli (H2)")
+		t.Fatal("boş tenant_id tenant-öncesi hash biçimiyle eşleşmeli — mevcut zincirler re-hash gerektirmemeli")
 	}
 	// Dolu tenant farklı hash üretmeli (izolasyon/transplant koruması korunur).
 	if bytes.Equal(got, AuditChainHash(prev, "tenantA", adminRef, action, targetType, targetID, at)) {

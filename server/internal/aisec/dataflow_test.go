@@ -70,7 +70,7 @@ func (m *mockSanitizer) Sanitize(input string) (string, bool) {
 	return m.out, m.ok
 }
 
-// TestSanitizeContext, SEC-007'yi doğrular: Tainted bağlam yalnızca CapSanitize ve
+// TestSanitizeContext, Tainted bağlam yalnızca CapSanitize ve
 // başarılı doğrulayıcı ile Untrusted'a yükseltilebilir. Asla doğrudan Trusted olamaz.
 func TestSanitizeContext(t *testing.T) {
 	sanitizer := &mockSanitizer{ok: true, out: "cleaned input"}

@@ -287,7 +287,7 @@ func (m *memStore) DeactivateAdmin(_ context.Context, id, tenantID string) error
 		a.Active = false
 	}
 	// Gerçek db/memstore davranışı: pasif admin için AdminRole boş döner (WHERE
-	// is_active). authed'in aktiflik teyidini (SEC-003) test edebilmek için taklit.
+	// is_active). authed'in aktiflik teyidini test edebilmek için taklit.
 	delete(m.roles, id)
 	return nil
 }
@@ -1275,7 +1275,7 @@ func TestEventAckHTTP(t *testing.T) {
 		t.Fatalf("OPERATOR resolve 200 dönmeliydi, %d", code)
 	}
 
-	// Vaka ata (assignee+note): VIEWER 403, OPERATOR 200; liste alanlarda görünmeli (#9).
+	// Vaka ata (assignee+note): VIEWER 403, OPERATOR 200; liste alanlarda görünmeli.
 	if code, _ := post(t, ts.URL+"/api/events/evt-x/case", vwTok,
 		map[string]string{"assignee": "soc@x", "note": "fidye"}); code != http.StatusForbidden {
 		t.Fatalf("VIEWER vaka 403 dönmeliydi, %d", code)
@@ -1381,7 +1381,7 @@ func TestArtifactCollectionHTTP(t *testing.T) {
 	}
 }
 
-// Retro-hunt (#1): "rules" modu mevcut tespit motorunu GEÇMİŞ olaylara uygular
+// Retro-hunt: "rules" modu mevcut tespit motorunu GEÇMİŞ olaylara uygular
 // (yeni kuralla eski olayları tarama); "query" modu zaman/alan filtreli arama.
 func TestHuntHTTP(t *testing.T) {
 	srv, store := newServer(t)
@@ -1521,7 +1521,7 @@ func TestListEventsScopedToCallerTenant(t *testing.T) {
 	}
 }
 
-// Toplu eylem (#6): dry_run önizleme HİÇBİR komut kuyruğa almamalı; gerçek çağrı
+// Toplu eylem: dry_run önizleme HİÇBİR komut kuyruğa almamalı; gerçek çağrı
 // yalnız etiketli cihazlara uygulanmalı.
 func TestBulkActionDryRunAndApply(t *testing.T) {
 	ts, store := setup(t)

@@ -413,7 +413,7 @@ func upgradeBlock(t *testing.T, name string) []string {
 	return stmts
 }
 
-// Kiracı Duvarı III (PG): schema.sql'deki GERÇEK TENANT-MAC ve INGEST-TOKEN-TENANT yükseltme blokları, ESKİ (legacy) bir
+// Kiracı izolasyonu yükseltmesi (PG): schema.sql'deki GERÇEK TENANT-MAC ve INGEST-TOKEN-TENANT yükseltme blokları, ESKİ (legacy) bir
 // durumdan — küresel mac_address_bidx kısıtı VAR, policies.tenant_id / tokens.tenant_id YOK —
 // başlayıp İKİ KEZ çalıştırılır: ilk turda eski kısıt düşer, yeni indeks ve sütunlar oluşur;
 // ikinci tur hatasız no-op'tur. Her şey bir transaction + geçici şema içinde yapılır (geri alınır,

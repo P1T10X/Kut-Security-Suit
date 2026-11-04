@@ -63,7 +63,7 @@ func (s *Store) SaveEnrollmentToken(ctx context.Context, tokenIndex []byte, crea
 	return nil
 }
 
-// WriteAudit, değişmez denetim izine bir satır yazar (#10).
+// WriteAudit, değişmez denetim izine bir satır yazar.
 // SaveArtifact, toplanan bir dosya artefaktını saklar ve id'sini döner
 // (grpc.ArtifactSink; adli/IR). command_id boşsa NULL yazılır.
 func (s *Store) SaveArtifact(ctx context.Context, deviceID, commandID, path, sha256 string, content []byte) (string, error) {
@@ -248,7 +248,7 @@ func (s *Store) ConsumePendingWipe(ctx context.Context, deviceID, approverID str
 const auditChainLockKey int64 = 0x4155_4449_54 // "AUDIT"
 
 func (s *Store) WriteAudit(ctx context.Context, adminID, action, targetType, targetID string) error {
-	// Kurcalama-kanıtı hash zinciri (SEC C-1): önceki entry_hash okunur, yeni hash
+	// Kurcalama-kanıtı hash zinciri: önceki entry_hash okunur, yeni hash
 	// hesaplanır ve prev_hash+entry_hash+created_at ile eklenir — hepsi tek transaction'da.
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -284,7 +284,7 @@ func (s *Store) WriteAudit(ctx context.Context, adminID, action, targetType, tar
 	return tx.Commit(ctx)
 }
 
-// VerifyAuditChain, audit_log hash zincirinin bütünlüğünü doğrular (SEC C-1).
+// VerifyAuditChain, audit_log hash zincirinin bütünlüğünü doğrular.
 // Kayıtları id sırasıyla okur ve her entry_hash'i yeniden hesaplayıp karşılaştırır.
 func (s *Store) VerifyAuditChain(ctx context.Context) error {
 	rows, err := s.pool.Query(ctx,

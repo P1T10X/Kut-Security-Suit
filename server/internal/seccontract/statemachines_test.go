@@ -36,7 +36,7 @@ func TestCommandTransitions(t *testing.T) {
 }
 
 func TestIntentTransitions(t *testing.T) {
-	// CREATED→UNKNOWN (B9/INV-051): delivery sınırı geçti, execution belirsiz.
+	// CREATED→UNKNOWN (INV-051): delivery sınırı geçti, execution belirsiz.
 	if !IntentCreated.CanGoTo(IntentUnknown) {
 		t.Fatal("CREATED→UNKNOWN geçerli olmalı (INV-051)")
 	}
@@ -60,7 +60,7 @@ func TestQuarantineTransitions(t *testing.T) {
 		t.Fatal("APPLYING→DEGRADED geçerli olmalı")
 	}
 	if !QDegraded.CanGoTo(QApplying) || !QDegraded.CanGoTo(QReleasing) {
-		t.Fatal("DEGRADED çıkışları (→APPLYING/→RELEASING) olmalı (H4)")
+		t.Fatal("DEGRADED çıkışları (→APPLYING/→RELEASING) olmalı")
 	}
 }
 
@@ -68,7 +68,7 @@ func TestEvidenceTransitions(t *testing.T) {
 	if !EvReceived.CanGoTo(EvVerified) || !EvVerified.CanGoTo(EvSealed) {
 		t.Fatal("RECEIVED→VERIFIED→SEALED geçerli olmalı")
 	}
-	// VERIFIED olmadan SEALED olamaz (M13).
+	// VERIFIED olmadan SEALED olamaz.
 	if EvReceived.CanGoTo(EvSealed) {
 		t.Fatal("RECEIVED→SEALED doğrudan yasak (önce VERIFIED)")
 	}
@@ -82,7 +82,7 @@ func TestRecommendationTransitions(t *testing.T) {
 	if RecIssued.CanGoTo(RecAccepted) {
 		t.Fatal("ISSUED→ACCEPTED doğrudan yasak (önce VALIDATED)")
 	}
-	// H1: 'APPROVED' diye bir recommendation durumu YOKTUR (authorization terminolojisi
+	// 'APPROVED' diye bir recommendation durumu YOKTUR (authorization terminolojisi
 	// AIRecommendation'da kullanılmaz). Bu, tip-seviyesinde garanti edilir — RecApproved
 	// sabiti tanımlı değildir; buradaki test yalnız niyeti belgeler.
 }

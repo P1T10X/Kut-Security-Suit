@@ -62,7 +62,7 @@ func TestFileSwapperNoPending(t *testing.T) {
 	}
 }
 
-// TestFileSwapperVerifyHookRefusesSwap, swap-anı yeniden-doğrulama kancası (H4) hata
+// TestFileSwapperVerifyHookRefusesSwap, swap-anı yeniden-doğrulama kancası hata
 // dönerse swap'ın REDDEDİLDİĞİNİ ve kurcalanmış staged artefaktların temizlendiğini; kanca
 // başarılı olursa swap'ın gerçekleştiğini doğrular.
 func TestFileSwapperVerifyHookRefusesSwap(t *testing.T) {

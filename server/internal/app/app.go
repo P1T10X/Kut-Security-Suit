@@ -103,7 +103,7 @@ type Backend interface {
 	// Ping, depo sağlık kontrolü (/readyz). Hem db (pool.Ping) hem memstore (nil).
 	Ping(ctx context.Context) error
 
-	// VerifyAuditChain, denetim izi hash-zincirinin bütünlüğünü doğrular (SEC C-1).
+	// VerifyAuditChain, denetim izi hash-zincirinin bütünlüğünü doğrular.
 	VerifyAuditChain(ctx context.Context) error
 }
 
@@ -166,7 +166,7 @@ func openBackend(ctx context.Context, cfg *config.Config) (Backend, error) {
 		return store, nil
 	}
 
-	// SEC-006: KUT_DATABASE_URL boşken SESSİZCE demo moduna düşme. Bellek-içi demo
+	// KUT_DATABASE_URL boşken SESSİZCE demo moduna düşme. Bellek-içi demo
 	// (kalıcılık yok + tohumlanmış admin) yalnız AÇIK bir onayla (KUT_DEMO=1)
 	// çalışmalı; aksi halde üretimde yanlış-yapılandırma riski (env unutulması)
 	// tohumlanmış admin ve loglanmış kimlikle açar. Bayrak yoksa hata ver.
@@ -350,7 +350,7 @@ func Run(enterpriseHook func(*eventbus.Bus) error) error {
 	}
 
 	// Ana anahtardan amaç-ayrımlı alt anahtarlar türet (diske yazılmaz). Anahtar
-	// rotasyonu (#9): eski ana anahtarlardan türetilen alan-şifreleme anahtarları
+	// rotasyonu: eski ana anahtarlardan türetilen alan-şifreleme anahtarları
 	// keyring'e çözme için eklenir — yeni veri yeni anahtarla şifrelenir, eski veri
 	// eski anahtarla çözülmeye DEVAM eder (veri kaybı yok).
 	oldFieldKeys := make([][]byte, 0, len(cfg.MasterKeysOld))
@@ -407,7 +407,7 @@ func Run(enterpriseHook func(*eventbus.Bus) error) error {
 	agentHandler := xgrpc.NewAgentHandler(backend, backend, backend, backend, notifier)
 	agentHandler.SetTenant(cfg.TenantID)             // sunucu-tarafı kiracı bağlama (olaylar bu kiracıyla atıflanır)
 	agentHandler.SetTenantEnforce(cfg.TenantEnforce) // sıkı çok-tenant: kiracısız cihazı reddet (KUT_TENANT_ENFORCE=1)
-	agentHandler.SetArtifactSink(backend)            // adli/IR dosya toplama (#4)
+	agentHandler.SetArtifactSink(backend)            // adli/IR dosya toplama
 	// Varlık/tehdit grafı: ajan olaylarından (DNS→alan, bağlantı→IP) cihaz-merkezli
 	// kenarlar beslenir; aynı örnek admin API'ye salt-okunur pivot uçları için verilir.
 	entGraph := entitygraph.New()
@@ -441,7 +441,7 @@ func Run(enterpriseHook func(*eventbus.Bus) error) error {
 	liveBus := eventbus.New()
 	agentHandler.SetAdminNotifier(liveBus)
 
-	// Yatay ölçekleme (#10): KUT_CLUSTER=1 ve PostgreSQL kullanılıyorsa, canlı
+	// Yatay ölçekleme: KUT_CLUSTER=1 ve PostgreSQL kullanılıyorsa, canlı
 	// bildirimler düğümler arası Postgres LISTEN/NOTIFY ile fan-out edilir; böylece
 	// yük dengeleyici arkasındaki HANGİ düğüme bağlı olursa olsun tüm adminler tüm
 	// olayları görür. Tek-düğüm (veya memstore) modunda bellek-içi bus kullanılır.
@@ -483,7 +483,7 @@ func Run(enterpriseHook func(*eventbus.Bus) error) error {
 	}
 	detector := detect.NewEngine(detectRules)
 	agentHandler.SetDetector(detector)
-	// Olay korelasyonu (#2): aynı cihaz+kural penceresindeki tespitleri tek
+	// Olay korelasyonu: aynı cihaz+kural penceresindeki tespitleri tek
 	// incident'e katla ve yinelenen alarmları bastır (alarm-fırtınası). Pencere
 	// KUT_CORRELATION_WINDOW (varsayılan 10dk). Backend incident'leri kalıcılaştırır.
 	corrWindow := 10 * time.Minute
@@ -528,7 +528,7 @@ func Run(enterpriseHook func(*eventbus.Bus) error) error {
 			alerter.SetHMACSecret(sec)
 			log.Println("dış uyarı: webhook HMAC imzalama etkin")
 		}
-		// Yönlendirme (#15): KUT_ALERT_CATEGORIES / KUT_ALERT_TECHNIQUES ayarlıysa
+		// Yönlendirme: KUT_ALERT_CATEGORIES / KUT_ALERT_TECHNIQUES ayarlıysa
 		// webhook'a YALNIZ eşleşen uyarılar gider (kategori/ATT&CK tekniği süzgeci).
 		cats := splitCSVEnv("KUT_ALERT_CATEGORIES")
 		techs := splitCSVEnv("KUT_ALERT_TECHNIQUES")
@@ -542,7 +542,7 @@ func Run(enterpriseHook func(*eventbus.Bus) error) error {
 		}
 		alertingOn = true
 	}
-	// SIEM iletici (#8): KUT_SIEM_ADDR ayarlıysa olaylar syslog+CEF/LEEF olarak
+	// SIEM iletici: KUT_SIEM_ADDR ayarlıysa olaylar syslog+CEF/LEEF olarak
 	// bir SIEM'e (ArcSight/QRadar/Splunk) iletilir. proto KUT_SIEM_PROTO (udp|tcp),
 	// biçim KUT_SIEM_FORMAT (cef|leef), eşik KUT_SIEM_MIN_SEVERITY.
 	if siemAddr := os.Getenv("KUT_SIEM_ADDR"); siemAddr != "" {
@@ -555,7 +555,7 @@ func Run(enterpriseHook func(*eventbus.Bus) error) error {
 		siemOn = true
 		log.Printf("SIEM iletici etkin: %s (%s/%s)", siemAddr, getenv("KUT_SIEM_PROTO", "udp"), getenv("KUT_SIEM_FORMAT", "cef"))
 	}
-	// Bakım/bastırma pencereleri (#18): KUT_SUPPRESS_FILE ayarlıysa planlı bakım
+	// Bakım/bastırma pencereleri: KUT_SUPPRESS_FILE ayarlıysa planlı bakım
 	// aralıklarında (opsiyonel cihaz/kategori kapsamı) uyarılar bastırılır. Canlı
 	// hot-reload: KUT_SUPPRESS_RELOAD_INTERVAL. Konsol için /api/maintenance.
 	var suppressHolder *notify.WindowHolder
@@ -589,7 +589,7 @@ func Run(enterpriseHook func(*eventbus.Bus) error) error {
 
 	if len(notifiers) > 0 {
 		var alerter notify.Notifier = notify.NewMulti(notifiers...)
-		// Yükseltme (#15): KUT_ALERT_ESCALATE_COUNT>0 ise aynı cihaz|kategori için
+		// Yükseltme: KUT_ALERT_ESCALATE_COUNT>0 ise aynı cihaz|kategori için
 		// KUT_ALERT_ESCALATE_WINDOW (varsayılan 10m) içinde bu kadar yüksek-önem
 		// uyarı birikince bir kez CRITICAL "ESCALATED" uyarısı üretilir (on-call).
 		if cnt := atoiEnv("KUT_ALERT_ESCALATE_COUNT"); cnt > 0 {
@@ -899,9 +899,9 @@ func Run(enterpriseHook func(*eventbus.Bus) error) error {
 	adminAPI.SetPrivacyNotice(os.Getenv("KUT_PRIVACY_NOTICE")) // KVKK aydınlatma (boşsa varsayılan)
 	adminAPI.SetAuditVerifier(backend.VerifyAuditChain)        // denetim izi hash-zincir doğrulama
 	if suppressHolder != nil {
-		adminAPI.SetMaintenanceProvider(suppressHolder.Windows) // bakım pencereleri görünürlüğü (#18)
+		adminAPI.SetMaintenanceProvider(suppressHolder.Windows) // bakım pencereleri görünürlüğü
 	}
-	// İmzalı denetim dışa aktarımı (#16): KUT_AUDIT_EXPORT_KEY (base64 Ed25519 özel
+	// İmzalı denetim dışa aktarımı: KUT_AUDIT_EXPORT_KEY (base64 Ed25519 özel
 	// anahtar) ayarlıysa /api/audit/export imzalı manifest üretir; aksi halde imzasız
 	// (yalnız hash zinciri). Anahtar geçersizse başlatma durur (yanlış yapılandırma).
 	if kb := os.Getenv("KUT_AUDIT_EXPORT_KEY"); kb != "" {
@@ -925,7 +925,7 @@ func Run(enterpriseHook func(*eventbus.Bus) error) error {
 	} else {
 		adminAPI.SetTokenStore(authtoken.NewMemStore(nil))
 	}
-	// Harici log alımı (#21 SIEM): KUT_INGEST_TOKEN ayarlıysa POST /api/ingest açılır
+	// Harici log alımı (SIEM): KUT_INGEST_TOKEN ayarlıysa POST /api/ingest açılır
 	// (statik Bearer token). Harici kaynaklar (güvenlik duvarı/bulut/SIEM) JSON veya
 	// CEF logları gönderebilir; normalize edilip olay yoluna yazılır.
 	if it := os.Getenv("KUT_INGEST_TOKEN"); it != "" {
@@ -1132,7 +1132,7 @@ func Run(enterpriseHook func(*eventbus.Bus) error) error {
 			log.Printf("tespit motoru: canlı yeniden yükleme her %s", d)
 		}
 	}
-	// Zafiyet eşleştirme (#5): KUT_VULN_FILE ayarlıysa CVE/KB veri kümesi yüklenir
+	// Zafiyet eşleştirme: KUT_VULN_FILE ayarlıysa CVE/KB veri kümesi yüklenir
 	// ve yazılım envanteriyle eşleştirilir (/api/vulnerabilities).
 	vulnCount := 0
 	if vp := os.Getenv("KUT_VULN_FILE"); vp != "" {
@@ -1207,7 +1207,7 @@ func Run(enterpriseHook func(*eventbus.Bus) error) error {
 		}
 	}()
 
-	// Zamanlanmış güvenlik-duruş raporu (#7): periyodik olarak (KUT_REPORT_INTERVAL,
+	// Zamanlanmış güvenlik-duruş raporu: periyodik olarak (KUT_REPORT_INTERVAL,
 	// vars. 24s) filo/tehdit özetini üretip loglar (JSON loglama açıksa SIEM'e gider).
 	// Tam rapor GET /api/report'tan (HTML/CSV) alınır.
 	repInterval := 24 * time.Hour
@@ -1345,7 +1345,7 @@ func Run(enterpriseHook func(*eventbus.Bus) error) error {
 		}
 	}
 
-	// C2 beacon tespiti (#8): periyodik olarak netconn geçmişini analiz eder;
+	// C2 beacon tespiti: periyodik olarak netconn geçmişini analiz eder;
 	// düzenli-aralıklı (düşük-jitter) (cihaz, uzak-IP) çiftlerini olası C2 beacon
 	// olarak işaretler — bilinen IoC olmadan bilinmeyen C2'yi yakalar. Aynı çift
 	// süreç ömrü boyunca bir kez uyarılır. KUT_BEACON_DISABLE ile kapatılır.

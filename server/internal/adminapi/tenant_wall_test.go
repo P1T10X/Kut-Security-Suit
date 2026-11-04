@@ -504,7 +504,7 @@ func TestPolicyTenantWallHTTP(t *testing.T) {
 	}
 }
 
-// Kiracı Duvarı II: artefakt/delil LİSTELEME uçları (dosya yolları + gözetim-zinciri aktörleri) de
+// Kiracı izolasyonu: artefakt/delil LİSTELEME uçları (dosya yolları + gözetim-zinciri aktörleri) de
 // adli eşikte (OPERATOR+) olmalı; gözetim-zinciri yazımı yönetici denetim izine de düşmeli.
 func TestForensicsListingsRequireOperatorAndCustodyIsAudited(t *testing.T) {
 	ts, store := wallServer(t)

@@ -137,7 +137,7 @@ ile görebilirsiniz.
 ## Belgeler
 
 Mimari: [docs/architecture.md](docs/architecture.md).
-İnceleme bulguları ve karşılığında alınan kararlar [docs/threat-model.md](docs/threat-model.md)
+Tehdit modeli ve alınan kararlar [docs/threat-model.md](docs/threat-model.md)
 içinde. Harici log alımı entegrasyonu için [docs/INGEST.md](docs/INGEST.md);
 ONNX model entegrasyonu için [docs/ONNX.md](docs/ONNX.md); çekirdek-seviye kurcalama
 koruması tasarımı için [docs/KERNEL-TAMPER.md](docs/KERNEL-TAMPER.md); Lite/Enterprise
@@ -281,7 +281,7 @@ Layers**) or via `GET /api/features`.
 
 ## Documentation
 
-Architecture: [docs/architecture.md](docs/architecture.md). Review findings
+Architecture: [docs/architecture.md](docs/architecture.md). Threat model risks
 and the decisions taken in response are in [docs/threat-model.md](docs/threat-model.md).
 For external log ingest integration, see [docs/INGEST.md](docs/INGEST.md); for ONNX
 model integration, see [docs/ONNX.md](docs/ONNX.md); for kernel-level tamper-protection

@@ -8,7 +8,7 @@
 # olarak belgeler.
 #
 # Ajan root çalışır (EDR görünürlüğü + MDM eylemleri için gerekli). Tamper-koruması
-# ek olarak watchdog (karşılıklı gözetim) + öz-tasdik (#4) ile sağlanır.
+# ek olarak watchdog (karşılıklı gözetim) + öz-tasdik ile sağlanır.
 
 [Unit]
 Description=KUT Endpoint Agent

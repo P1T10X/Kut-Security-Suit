@@ -54,7 +54,7 @@ func Prepare(ctx context.Context, m otawire.Manifest, signature []byte, v *Verif
 	// İmzalı manifesto + imzayı staged ikilinin yanına yaz: watchdog (AYRI süreç),
 	// swap'tan HEMEN ÖNCE imzayı + SHA-256'yı YENİDEN doğrular. Böylece stage↔swap
 	// arasında staged dosyanın kurcalanması (TOCTOU) yakalanır — imzasız/bozuk ikili
-	// SYSTEM watchdog tarafından çalıştırılamaz (inceleme #5 / H4).
+	// SYSTEM watchdog tarafından çalıştırılamaz.
 	mj, err := json.Marshal(m)
 	if err != nil {
 		return nil, fmt.Errorf("update: manifesto serileştirme: %w", err)

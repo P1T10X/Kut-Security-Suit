@@ -13,7 +13,7 @@ import (
 )
 
 // CA, enrollment sırasında ajan CSR'larını imzalayarak kısa ömürlü istemci
-// sertifikaları üreten kurum içi sertifika otoritesidir (inceleme #6).
+// sertifikaları üreten kurum içi sertifika otoritesidir.
 type CA struct {
 	cert *x509.Certificate
 	key  crypto.Signer
@@ -65,7 +65,7 @@ func (ca *CA) SignCSR(csrPEM []byte, deviceID string, ttl time.Duration) (*Signe
 	now := time.Now()
 	notAfter := now.Add(ttl)
 
-	// SEC-010: Subject SIFIRDAN kurulur — yalnız CN = atanan device_id. CSR'daki
+	// Subject SIFIRDAN kurulur — yalnız CN = atanan device_id. CSR'daki
 	// istemci-kontrollü Subject alanları (O/OU vb.) sertifikaya KOPYALANMAZ.
 	tmpl := &x509.Certificate{
 		SerialNumber: serial,

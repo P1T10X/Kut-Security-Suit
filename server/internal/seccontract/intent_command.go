@@ -30,7 +30,7 @@ type ExecutionIntent struct {
 // GrantID TAŞIMAZ, yalnız opak AuthorizationCorrelationID.
 type CommandEnvelope struct {
 	CommandID                  string // stable execution/dedup kimliği (INV-042/046)
-	AuthorizationCorrelationID string // opak; GrantID DEĞİL (H2)
+	AuthorizationCorrelationID string // opak; GrantID DEĞİL
 	RequestID                  string // audit korelasyon
 	TenantID                   string
 	DeviceID                   string
@@ -43,8 +43,8 @@ type CommandEnvelope struct {
 	Signature                  []byte // sunucu imzası (agent bağımsız doğrular)
 }
 
-// CorrelationID, bir GrantID'den OPAK, yetkilendirmeyen bir korelasyon kimliği türetir
-// (H2). Cihaza güvenle gönderilebilir; GrantID geri elde edilemez (tek-yön özet).
+// CorrelationID, bir GrantID'den OPAK, yetkilendirmeyen bir korelasyon kimliği türetir.
+// Cihaza güvenle gönderilebilir; GrantID geri elde edilemez (tek-yön özet).
 // Server audit CorrelationID↔GrantID↔RequestID eşlemesini ayrıca tutar.
 func CorrelationID(grantID string) string {
 	sum := sha256.Sum256([]byte("kut-corr\x1f" + grantID))

@@ -70,7 +70,7 @@ func TestWriteExposition(t *testing.T) {
 	}
 }
 
-// Kiracı Duvarı III: sınırlı bellek-içi durumun düşen/atılan/boyut metrikleri /metrics'te görünür.
+// Kiracı izolasyonu: sınırlı bellek-içi durumun düşen/atılan/boyut metrikleri /metrics'te görünür.
 func TestWriteBoundedStateMetrics(t *testing.T) {
 	SetGraphStats(7, 5, 3, 120, 90)
 	SetSeqModelStats(11, 2, 4, 33)

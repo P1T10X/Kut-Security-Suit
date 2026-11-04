@@ -43,7 +43,7 @@ var commandTransitions = map[CommandState]map[CommandState]bool{
 func (s CommandState) CanGoTo(to CommandState) bool { return commandTransitions[s][to] }
 
 // Terminal, komut durumunun terminal olup olmadığını döner. EXECUTION_UNKNOWN
-// terminal DEĞİLDİR (reconciliation ister — M12/INV-050).
+// terminal DEĞİLDİR (reconciliation ister — INV-050).
 func (s CommandState) Terminal() bool {
 	switch s {
 	case CmdSucceeded, CmdFailedFinal, CmdExpired, CmdCancelled, CmdReconciledOK, CmdReconciledFail:
@@ -67,7 +67,7 @@ const (
 )
 
 var intentTransitions = map[IntentState]map[IntentState]bool{
-	IntentCreated:   {IntentExecuting: true, IntentUnknown: true}, // CREATED→UNKNOWN (B9/INV-051)
+	IntentCreated:   {IntentExecuting: true, IntentUnknown: true}, // CREATED→UNKNOWN (INV-051)
 	IntentExecuting: {IntentDone: true, IntentFailed: true, IntentUnknown: true},
 	IntentUnknown:   {IntentReconciledDone: true, IntentReconciledFail: true},
 }
@@ -120,7 +120,7 @@ var evidenceTransitions = map[EvidenceState]map[EvidenceState]bool{
 
 func (s EvidenceState) CanGoTo(to EvidenceState) bool { return evidenceTransitions[s][to] }
 
-// ---- AIRecommendation lifecycle (§12; H1 — APPROVED YOK) ----
+// ---- AIRecommendation lifecycle (§12; APPROVED YOK) ----
 type RecommendationState string
 
 const (

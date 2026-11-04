@@ -6,14 +6,14 @@ Accepted
 ## Context
 In enterprise endpoint security platforms, commands sent from the C2 server to endpoints (such as `LOCK`, `WIPE`, `QUARANTINE`, or `RUN_SIGNED_SCRIPT`) represent high-impact actions. Without end-to-end cryptographic integrity, an attacker performing a man-in-the-middle or compromising intermediate queues could forge, alter parameters, or replay administrative actions. 
 
-Furthermore, security finding **SEC-005** highlighted that naive JSON serialization is non-deterministic in Go without canonical ordering, risking false-positive signature verification failures.
+Furthermore, naive JSON serialization is non-deterministic in Go without canonical ordering, risking false-positive signature verification failures.
 
 ## Decision
 We implemented deterministic command signing and verification in `server/internal/commandplane`:
 
 1. **Deterministic Canonical Signing Layout:**
    - `CanonicalSigningBytes` binds `CommandID`, `DeviceID`, `CommandType`, `IssuedBy`, sorted SHA-256 hash of parameters (`hashParams`), `Nonce`, `IssuedAt`, and `ExpiresAt` using unit separators (`0x1f`).
-   - Resolves **SEC-005** by eliminating JSON key-ordering discrepancies.
+   - Eliminates JSON key-ordering discrepancies.
 
 2. **Ed25519 Signature Envelope:**
    - `CommandSigner.Sign` generates a cryptographic nonce and signs canonical bytes with the server's Ed25519 private key.
@@ -31,7 +31,7 @@ We implemented deterministic command signing and verification in `server/interna
 ### Positive
 - Endpoint agents execute high-impact commands only if verified by the server's Ed25519 signature.
 - Anti-replay and parameter integrity are guaranteed at the cryptographic level.
-- Resolves finding SEC-005.
+- Removes JSON key-ordering discrepancies.
 
 ### Negative
 - Endpoints must have the server's Ed25519 public key pre-provisioned or distributed during enrollment.

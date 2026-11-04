@@ -12,7 +12,7 @@ import (
 
 // BlindIndexer, hassas bir değerden aranabilir ama tersine çevrilemez bir
 // indeks üretir. Düz SHA-256 yerine keyed HMAC kullanılır: MAC adres uzayı
-// ~48 bit olduğundan düz hash offline brute-force'a açıktır (inceleme #2).
+// ~48 bit olduğundan düz hash offline brute-force'a açıktır.
 type BlindIndexer struct {
 	key []byte
 }

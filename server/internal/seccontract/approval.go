@@ -7,8 +7,8 @@ import (
 	"kut.corp/suite/server/internal/scope"
 )
 
-// ApprovalState, dual-control onay yaşam döngüsüdür (CONTRACTS §4; M6). REJECTED/
-// EXPIRED terminaldir; CONSUMED yalnız APPROVED'dan gelir. Karar = State (M7);
+// ApprovalState, dual-control onay yaşam döngüsüdür (CONTRACTS §4). REJECTED/
+// EXPIRED terminaldir; CONSUMED yalnız APPROVED'dan gelir. Karar = State;
 // ayrı mutable Decision alanı yoktur.
 type ApprovalState string
 
@@ -48,7 +48,7 @@ type Approval struct {
 	State              ApprovalState
 }
 
-// ApprovalStore, onayın grant-mint için TEK KEZ tüketilmesini sağlar (B4). Bir kez
+// ApprovalStore, onayın grant-mint için TEK KEZ tüketilmesini sağlar. Bir kez
 // grant mint edildikten sonra aynı onay yeniden grant üretemez.
 type ApprovalStore interface {
 	// Consume, onayı atomik olarak "grant için tüketildi" işaretler; ikinci çağrı hata.
@@ -78,10 +78,10 @@ func (s *MemApprovalStore) Consume(approvalID string) error {
 	return nil
 }
 
-// FinalizeAuthorization, NEED_APPROVAL sonrası onaylı bir isteği SONLANDIRIR (B4):
+// FinalizeAuthorization, NEED_APPROVAL sonrası onaylı bir isteği SONLANDIRIR:
 // (1) onay APPROVED & süresi geçmemiş, (2) policy/tenant/target/binding YENİDEN
 // doğrulanır, (3) RequesterPrincipal != ApproverPrincipal, (4) onay atomik tüketilir
-// ve TEK grant mint edilir. Herhangi biri başarısızsa DENY (spesifik reason-code, M11).
+// ve TEK grant mint edilir. Herhangi biri başarısızsa DENY (spesifik reason-code).
 // Approval doğrudan grant-mint etmez (INV-040).
 func FinalizeAuthorization(req ActionRequest, ap Approval, store ApprovalStore, effectivePolicyHash string, now time.Time, mint func() (grantID, nonce string), ttl time.Duration) AuthorizationDecision {
 	if ap.State != ApprovalApproved {

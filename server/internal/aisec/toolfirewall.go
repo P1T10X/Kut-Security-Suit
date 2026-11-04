@@ -95,7 +95,7 @@ func (tf *ToolFirewall) AuthorizeToolCall(call ToolCall) (bool, string) {
 	}
 
 	if matchedRule.RequiresDualAuth {
-		// FAIL-CLOSED (M3): dual-auth gerektiren bir tool, bu TEK çağrıyla
+		// FAIL-CLOSED: dual-auth gerektiren bir tool, bu TEK çağrıyla
 		// yetkilendirilemez. İkinci-onay ayrı bir katmanda sağlanana dek REDDEDİLİR.
 		// Önceki sürüm bool=true ("pending") döndürüyordu → yalnız bool'a bakan
 		// çağıran ikinci-onay olmadan devam ediyordu (fail-open).

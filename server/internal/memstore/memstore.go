@@ -41,7 +41,7 @@ type device struct {
 	osPlatform    string
 	osVersion     string
 	agentVersion  string
-	binaryHash    string // ajan ikilisi SHA-256 (öz-tasdik, #4)
+	binaryHash    string // ajan ikilisi SHA-256 (öz-tasdik)
 	binaryVersion string // yukarıdaki hash'in ait olduğu sürüm
 	status        string
 	tenant        string // çok-tenant: cihazın kiracısı (enrollment token'dan)
@@ -688,7 +688,7 @@ func (s *Store) WriteAudit(_ context.Context, adminID, action, targetType, targe
 
 // VerifyAuditChain, denetim izi hash-zincirinin bütünlüğünü doğrular: her kaydın
 // saklanan hash'i, bir önceki hash + kayıt alanlarından yeniden hesaplananla
-// eşleşmeli. Eşleşmezse ilk kırık kaydın id'siyle hata döner (SEC C-1).
+// eşleşmeli. Eşleşmezse ilk kırık kaydın id'siyle hata döner.
 func (s *Store) VerifyAuditChain(_ context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

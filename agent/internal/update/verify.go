@@ -3,7 +3,7 @@
 //  1. Manifesto imzasını gömülü public key ile doğrular (kimlik + bütünlük).
 //  2. İndirilen paketin SHA-256'sını manifestodaki değerle karşılaştırır.
 //
-// Yalnız SHA-256 eşleşmesi YETMEZ (inceleme #4): imza, paketin gerçekten
+// Yalnız SHA-256 eşleşmesi YETMEZ: imza, paketin gerçekten
 // yetkili yönetici tarafından yayımlandığını kanıtlar; hash yalnız transport
 // bütünlüğüdür.
 package update
@@ -26,7 +26,7 @@ var (
 )
 
 // Verifier, GÜVENİLEN public key(ler)le güncellemeleri doğrular. Birden çok anahtar
-// desteği imza-anahtarı ROTASYONU içindir (#9): örtüşme penceresinde hem eski hem
+// desteği imza-anahtarı ROTASYONU içindir: örtüşme penceresinde hem eski hem
 // yeni anahtar güvenilir; yeni anahtarla imzalanır, ajanlar ikisini de kabul eder.
 type Verifier struct {
 	pubs []ed25519.PublicKey

@@ -1,7 +1,7 @@
 // Package auditexport, denetim izinin (audit log) HARİCİ, taşınabilir ve
 // KURCALAMA-KANITLI bir dışa aktarımını üretir ve doğrular.
 //
-// Amaç: Dahili denetim zinciri (SEC C-1) veritabanında tamper-evident tutulur;
+// Amaç: Dahili denetim zinciri veritabanında tamper-evident tutulur;
 // ancak uzun-süreli/bağımsız arşiv (WORM depolama, harici SIEM, denetçi) için
 // izin C2'DEN BAĞIMSIZ doğrulanabilmesi gerekir. Bu paket her kaydı bir hash
 // zincirine bağlar (bir kaydı değiştirmek sonraki tüm hash'leri bozar) ve

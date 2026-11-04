@@ -105,7 +105,7 @@ Aşağıdaki yüzeyler de kiracı duvarına ve rol kapısına bağlanmıştır:
   eski sır ve `mfa_enrolled` aynen kalır (giriş MFA'yı zorunlu kılar, kapatma eski sırdan
   kod ister); etkinleşmede takas atomiktir ve eski sır geçersizleşir.
 - **Adli (forensics) uçları** OPERATOR+ gerektirir (VIEWER 403): artefakt indirme,
-  emanet-zinciri (custody) kaydı, tespit yeniden-oynatma (replay) ve (Kiracı Duvarı II) artefakt/delil
+  emanet-zinciri (custody) kaydı, tespit yeniden-oynatma (replay) ve artefakt/delil
   LİSTELEME (`GET /api/devices/{id}/artifacts`, `/evidence`).
 - **İptal edilmiş sertifikalar**, devam ettirilen (resumed) TLS oturumlarında da
   `VerifyConnection` ile zorlanır; iptal listesi başlangıçta yüklenir.
@@ -114,7 +114,7 @@ Konsol bu kapılarla uyumludur: VIEWER oturumunda artefakt indirme denetimi gizl
 (kilit simgesi), 403'ler mesajla ele alınır; MFA yeniden kayıt/kapatma mevcut kodu sorar;
 enrollment token isteği kiracı göndermez (kiracı sunucuda çözülür).
 
-## Kiracı Duvarı II: veri ve yönetim katmanı
+## Kiracı izolasyonu: veri ve yönetim katmanı
 
 - **MAC tekilliği kiracı başınadır**: `devices.mac_address_bidx` artık küresel UNIQUE
   değildir; tekillik anahtarı `uq_devices_tenant_mac` = (kanonik kiracı, MAC). Kanonik kiracı
@@ -151,7 +151,7 @@ enrollment token isteği kiracı göndermez (kiracı sunucuda çözülür).
 - **Adli kayıt**: artefakt/delil listeleme OPERATOR+ (dosya yolları + gözetim zinciri aktörleri
   içerir); başarılı gözetim yazımı yönetici denetim izine `CUSTODY_<EYLEM>` olarak da düşer.
 
-### Mevcut kurulumlar için yükseltme (Kiracı Duvarı II)
+### Mevcut kurulumlar için yükseltme (veri ve yönetim katmanı)
 
 1. Şema bloğunu uygulayın (idempotent, yeniden çalıştırılabilir; taze kurulumda no-op):
    `sed -n '/^-- BEGIN TENANT-MAC-UPGRADE/,/^-- END TENANT-MAC-UPGRADE/p' db/schema.sql | psql "$KUT_DATABASE_URL"`.
@@ -210,7 +210,7 @@ SELECT dp.device_id, dp.policy_id, d.tenant_id AS cihaz_kiracisi, p.tenant_id AS
    Bu atamalar ajana ZATEN itilmez (politika çekimi kiracı eşleşmesi arar); satırları temizlemek
    için `DELETE FROM device_policies` ile ilgili çiftleri silin.
 
-## Kiracı Duvarı III: telemetri, analizörler, AI ve graf
+## Kiracı izolasyonu: telemetri, analizörler, AI ve graf
 
 - **HTTP `/api/ingest` kiracıya bağlıdır**: yönetilen ingest token'ları
   OLUŞTURULURKEN bir kiracıya bağlanır (`POST /api/tokens {"scope":"ingest","tenant":"acme"}`;
@@ -222,7 +222,7 @@ SELECT dp.device_id, dp.policy_id, d.tenant_id AS cihaz_kiracisi, p.tenant_id AS
   (`logingest.SourceIDTenant` → `logingest.TenantDeviceID`): iki kiracı aynı kaynak adını (`fw1`)
   kullansa da AYRI cihaz/eşik/korelatör durumuna sahiptir.
   - **Kimlik sürekliliği kararı**: kiracısız (legacy/statik) token ve kiracısız connector olayları
-    dağıtım kiracısıyla DAMGALANIR ama cihaz kimlikleri Kiracı Duvarı III öncesiyle AYNI kalır (ad-alanlanmaz).
+    dağıtım kiracısıyla DAMGALANIR ama cihaz kimlikleri kiracı damgalama öncesiyle AYNI kalır (ad-alanlanmaz).
     Böylece `KUT_TENANT_ID=acme` olan mevcut bir dağıtımda yükseltme sonrası kaynakların cihaz
     kaydı, eşik, korelatör durumu ve geçmişi BÖLÜNMEZ. Dağıtım kiracısına açıkça bağlı token da
     aynı (eski) kimliği paylaşır. Ad-alanlama yalnız dağıtım kiracısından farklı, açıkça bağlı
@@ -230,7 +230,7 @@ SELECT dp.device_id, dp.policy_id, d.tenant_id AS cihaz_kiracisi, p.tenant_id AS
     (ve dolayısıyla cihaz geçmişi) değişir — bu bilinçli bir taşıma adımıdır.
   - `KUT_TENANT_ENFORCE=1` iken kiracıya bağlı OLMAYAN token (statik `KUT_INGEST_TOKEN` dahil)
     `403` alır ve kiracısız ingest token'ı üretilemez (INV-044: eksik kiracı → DENY).
-  - **Legacy**: zorlama KAPALIYKEN kiracısız token'lar (statik env token ve Kiracı Duvarı III öncesi üretilmiş
+  - **Legacy**: zorlama KAPALIYKEN kiracısız token'lar (statik env token ve kiracı damgalama öncesi üretilmiş
     yönetilen token'lar) olayları dağıtımın varsayılan kiracısıyla (`KUT_TENANT_ID`, boşsa `default`)
     damgalar. Çok-kiracılı kurulumda bu token'ları kiracıya bağlı yenileriyle değiştirin.
 - **Connector olayları** her connector'ın yapılandırılmış kiracısıyla (`"tenant"` alanı;
@@ -284,7 +284,7 @@ SELECT dp.device_id, dp.policy_id, d.tenant_id AS cihaz_kiracisi, p.tenant_id AS
   `kut_incident_case_total{result}`); `default` kovasına düşülmez. Boş kiracı kanonik `default`
   kiracısıdır, zorlama açıkken atlanır.
 
-### Mevcut kurulumlar için yükseltme (Kiracı Duvarı III)
+### Mevcut kurulumlar için yükseltme (telemetri, analizörler, AI ve graf)
 
 1. Şema bloğunu uygulayın (idempotent; taze kurulumda no-op):
    `sed -n '/^-- BEGIN INGEST-TOKEN-TENANT-UPGRADE/,/^-- END INGEST-TOKEN-TENANT-UPGRADE/p' db/schema.sql | psql "$KUT_DATABASE_URL"`.
@@ -297,7 +297,7 @@ SELECT dp.device_id, dp.policy_id, d.tenant_id AS cihaz_kiracisi, p.tenant_id AS
    ile kiracısız token'ları kapatın (connector'lara da açık `"tenant"` ekleyin). Kiracısız token
    ve connector'ların cihaz kimlikleri değişmez (bkz. kimlik sürekliliği kararı).
 
-#### Geri alma (Kiracı Duvarı III) — önce kiracıya bağlı ingest token'larını iptal edin
+#### Geri alma (telemetri katmanı) — önce kiracıya bağlı ingest token'larını iptal edin
 
 Geri alma "ikiliyi eskisiyle değiştirmek"ten ibaret DEĞİLDİR. ESKİ ikili `tokens.tenant_id`
 sütununu yok sayar: kiracıya bağlı bir ingest token'ını geçerli kabul eder ve o token'ın olayları
@@ -320,13 +320,13 @@ UPDATE tokens SET revoked_at = now()
 Aynı işlem API ile (platform admini): `GET /api/tokens?scope=ingest` yanıtında `tenant` alanı dolu
 ve `revoked_at` boş olanları bulun, her biri için `POST /api/tokens/{id}/revoke` çağırın.
 Doğrulama: ilk sorgu 0 satır dönmeli. Geri alma sonrası şema sütunu zararsız kalır (eski ikili
-yok sayar); ikiliyi ancak bundan sonra eskisiyle değiştirin. Eski ikilide Kiracı Duvarı III'ün ingest
+yok sayar); ikiliyi ancak bundan sonra eskisiyle değiştirin. Eski ikilide kiracı izolasyonunun ingest
 kiracı bağı (token kiracısı, kiracısız token reddi, connector kiracısı) YOKTUR; çok-kiracılı bir
 kurulumda geri alma bu yalıtımı kaybeder — mümkünse geri alma yerine ileri-düzeltme tercih edin.
 
 
 
-## Yükseltme sonrası doğrulama (Kiracı Duvarı II küresel MAC kısıtı)
+## Yükseltme sonrası doğrulama (küresel MAC kısıtı)
 
 `DROP CONSTRAINT IF EXISTS devices_mac_address_bidx_key` kısıt FARKLI bir adla varsa sessizce hiçbir
 şey yapmaz; küresel tekillik bu durumda sinyalsiz sürerdi. Yükseltmeden sonra adı ne olursa olsun

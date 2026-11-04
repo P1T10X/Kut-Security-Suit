@@ -13,8 +13,8 @@ import (
 )
 
 // TestABACEvaluateRequiresAdmin, politika-değerlendirme ucunun (policy oracle) artık
-// RoleAdmin gerektirdiğini doğrular: VIEWER 403 alır, ADMIN geçer. (Denetim bulgusu:
-// önceden herhangi bir Viewer ABAC yüzeyini haritalayabiliyordu.)
+// RoleAdmin gerektirdiğini doğrular: VIEWER 403 alır, ADMIN geçer. (Önceden
+// herhangi bir Viewer ABAC yüzeyini haritalayabiliyordu.)
 func TestABACEvaluateRequiresAdmin(t *testing.T) {
 	srv, store := newServer(t)
 	srv.SetABAC(iam.NewEngine(nil))
@@ -55,8 +55,8 @@ func (fakeMSPStore) MSPGetCustomer(string) (msp.Customer, bool, error) {
 func (fakeMSPStore) MSPDeactivateCustomer(string) (bool, error) { return true, nil }
 
 // TestSCIMAndMSPRequireAdmin, kimlik/tenant yönetim uçlarının (SCIM + MSP) artık RoleAdmin
-// gerektirdiğini doğrular: bir VIEWER 403 alır, bir ADMIN geçer. (Denetim bulgusu düzeltmesi:
-// önceden bu uçlar yalnız s.authed ile korunuyordu → herhangi bir Viewer kimlik/müşteri
+// gerektirdiğini doğrular: bir VIEWER 403 alır, bir ADMIN geçer. (Önceden
+// bu uçlar yalnız s.authed ile korunuyordu → herhangi bir Viewer kimlik/müşteri
 // oluşturabiliyordu.)
 func TestSCIMAndMSPRequireAdmin(t *testing.T) {
 	srv, store := newServer(t)

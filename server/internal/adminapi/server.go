@@ -85,13 +85,13 @@ type Server struct {
 	loginLim       *loginLimiter
 	notice         string // TR/KVKK gizlilik metni
 	noticeEN       string // EN/GDPR gizlilik metni (/api/notice?lang=en)
-	dummyHash      string // SEC-004: bilinmeyen e-postada sabit-zaman için sahte Argon2 hash
-	sseConns       int64  // SEC-007: aktif SSE bağlantı sayısı (atomik)
+	dummyHash      string // bilinmeyen e-postada sabit-zaman için sahte Argon2 hash
+	sseConns       int64  // aktif SSE bağlantı sayısı (atomik)
 	auditVerify    func(context.Context) error
-	auditExpKey    ed25519.PrivateKey             // ayarlıysa /api/audit/export imzalı manifest üretir (#16)
-	maintWindows   func() []notify.Window         // ayarlıysa /api/maintenance bakım pencerelerini döner (#18)
+	auditExpKey    ed25519.PrivateKey             // ayarlıysa /api/audit/export imzalı manifest üretir
+	maintWindows   func() []notify.Window         // ayarlıysa /api/maintenance bakım pencerelerini döner
 	metricsToken   string                         // ayarlıysa /metrics bu Bearer token ile açılır; boşsa uç kapalı
-	ingestToken    string                         // ayarlıysa POST /api/ingest bu Bearer token ile açılır (#21)
+	ingestToken    string                         // ayarlıysa POST /api/ingest bu Bearer token ile açılır
 	tokens         authtoken.Store                // yönetilen API token'ları (rotation/expiry/iptal); nil => yalnız statik env token
 	ingestSink     EventIngestor                  // harici log alımı için olay yazma yolu
 	ingestLimiter  *ratelimit.Limiter             // /api/ingest IP-başına hız sınırı (nil = kapalı)
@@ -195,7 +195,7 @@ type EventIngestor interface {
 }
 
 // SetIngest, POST /api/ingest harici log alım ucunu etkinleştirir: statik Bearer
-// token (makine-makine) + olay yazma yolu. token boşsa uç kapalıdır (#21).
+// token (makine-makine) + olay yazma yolu. token boşsa uç kapalıdır.
 func (s *Server) SetIngest(sink EventIngestor, token string) {
 	s.ingestSink, s.ingestToken = sink, token
 }
@@ -280,7 +280,7 @@ func (s *Server) ingestTenant(tokenTenant string) (string, bool) {
 	return tenant.Canonical(strings.ToLower(strings.TrimSpace(s.tenantID))), true
 }
 
-// maxSSEConns, eşzamanlı SSE akış bağlantısı üst sınırıdır (SEC-007).
+// maxSSEConns, eşzamanlı SSE akış bağlantısı üst sınırıdır.
 const maxSSEConns = 64
 
 // maxSSELifetime, tek bir SSE bağlantısının AZAMİ ömrüdür. Admin HTTP sunucusunda
@@ -312,7 +312,7 @@ const defaultPrivacyNoticeEN = "Privacy Notice (GDPR): This device is company-ow
 // New oluşturur. Giriş ucu varsayılan olarak istemci başına 5 başarısız
 // denemeden sonra 15 dk kilitlenir (kaba-kuvvet koruması).
 func New(adminSvc *admin.Service, reader *adminread.Service, auth AuthStore, sessions *security.SessionSigner, ttl time.Duration) *Server {
-	// SEC-004: bilinmeyen/pasif e-postada da Argon2 maliyeti ödensin diye rastgele
+	// bilinmeyen/pasif e-postada da Argon2 maliyeti ödensin diye rastgele
 	// bir parolanın hash'i önceden hesaplanır (kullanıcı numaralandırmayı süre
 	// bakımından sabitler). Hesaplanamazsa boş kalır (o durumda dallanma korunur).
 	dummy := make([]byte, 16)
@@ -465,11 +465,11 @@ func (s *Server) SetPartitionReadiness(fn func(context.Context) (bool, error)) {
 func (s *Server) SetAuditVerifier(fn func(context.Context) error) { s.auditVerify = fn }
 
 // SetAuditExportKey, GET /api/audit/export imzalı dışa aktarım için Ed25519 özel
-// anahtarı bağlar (#16). nil/boşsa dışa aktarım imzasız (yalnız hash zinciri) olur.
+// anahtarı bağlar. nil/boşsa dışa aktarım imzasız (yalnız hash zinciri) olur.
 func (s *Server) SetAuditExportKey(priv ed25519.PrivateKey) { s.auditExpKey = priv }
 
 // SetMaintenanceProvider, GET /api/maintenance için bakım/bastırma pencerelerini
-// sağlayan fonksiyonu bağlar (#18). nil ise uç boş liste döner.
+// sağlayan fonksiyonu bağlar. nil ise uç boş liste döner.
 func (s *Server) SetMaintenanceProvider(fn func() []notify.Window) { s.maintWindows = fn }
 
 // Handler, yönlendirmeleri kayıtlı bir http.Handler döner.
@@ -477,7 +477,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	// Web yönetim konsolu (aynı köken — API çağrıları CORS'suz çalışır).
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, _ *http.Request) {
-		// SEC-008: script-src 'unsafe-inline' yerine per-request NONCE. Böylece
+		// script-src 'unsafe-inline' yerine per-request NONCE. Böylece
 		// olası bir XSS'te enjekte edilen inline script çalışmaz (yalnız nonce'lu
 		// tek script yüklenir). style-src 'unsafe-inline' kalır (inline style=
 		// öznitelikleri; stil enjeksiyonu düşük risk). Konsol dış kaynak kullanmaz.
@@ -604,7 +604,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /readyz", s.handleReadyz)
 	mux.HandleFunc("GET /api/notice", s.handleNotice)  // KVKK aydınlatma (public)
 	mux.HandleFunc("GET /metrics", s.handleMetrics)    // Prometheus (statik token ile)
-	mux.HandleFunc("POST /api/ingest", s.handleIngest) // harici log alımı (statik token ile, #21)
+	mux.HandleFunc("POST /api/ingest", s.handleIngest) // harici log alımı (statik token ile)
 	h := requestLog(securityHeaders(mux))
 	if s.tracer != nil {
 		h = s.tracing(h)
@@ -736,7 +736,7 @@ func (s *Server) authed(h func(http.ResponseWriter, *http.Request, string)) http
 			writeErr(w, http.StatusUnauthorized, "yetkisiz")
 			return
 		}
-		// SEC-003: durumsuz token iptal edilemediğinden, her istekte yöneticinin
+		// durumsuz token iptal edilemediğinden, her istekte yöneticinin
 		// HÂLÂ aktif olduğu depodan teyit edilir. Pasifleştirilen/silinen yönetici
 		// (rolü boş döner) token TTL'i dolmadan da anında engellenir — böylece
 		// salt-okuma uçları da eski oturumla erişime kapanır.
@@ -800,7 +800,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &req) {
 		return
 	}
-	// SEC-005: kaba-kuvvet sayacı IP+e-posta bileşimine bağlıdır. Böylece bir ters
+	// kaba-kuvvet sayacı IP+e-posta bileşimine bağlıdır. Böylece bir ters
 	// vekil/LB arkasında (tüm istemciler aynı RemoteAddr) bir hesabın başarısız
 	// denemeleri DİĞER yöneticileri kilitlemez (küresel-kilit DoS'u önlenir).
 	key := clientIP(r) + "|" + strings.ToLower(strings.TrimSpace(req.Email))
@@ -846,7 +846,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	adminID, hash, err := s.auth.LookupAdmin(r.Context(), req.Email)
 	if err != nil || adminID == "" {
-		// SEC-004: bilinmeyen/pasif e-postada da Argon2 maliyetini öde (sabit-zaman;
+		// bilinmeyen/pasif e-postada da Argon2 maliyetini öde (sabit-zaman;
 		// kullanıcı numaralandırma yan-kanalını kapatır). Sonuç yok sayılır.
 		_, _ = security.VerifyPassword(s.dummyHash, req.Password)
 		s.loginFailed(key, req.Email)
@@ -914,7 +914,7 @@ func isWinlogBody(body []byte) bool {
 }
 
 // handleIngest, HARİCİ kaynaklardan (güvenlik duvarı, bulut, SIEM) gelen logları
-// alır, KUT olay modeline normalize eder ve olay yoluna yazar (#21 SIEM alımı).
+// alır, KUT olay modeline normalize eder ve olay yoluna yazar (SIEM alımı).
 // ingestToken ayarlı değilse uç KAPALIDIR (404). Ayarlıysa doğru Bearer token
 // gerekir (sabit-zaman). Content-Type application/json → JSON dizi/nesne; aksi
 // halde metin (satır başına CEF). Body üst sınırı 4 MiB.
@@ -1293,7 +1293,7 @@ func (s *Server) handleIssueToken(w http.ResponseWriter, r *http.Request, adminI
 }
 
 func (s *Server) handleListTokens(w http.ResponseWriter, r *http.Request, adminID string) {
-	// SEC-009: enrollment token meta verisi hassastır — OPERATOR+ gerekir.
+	// enrollment token meta verisi hassastır — OPERATOR+ gerekir.
 	if respondErr(w, s.adminSvc.EnsureRole(r.Context(), adminID, admin.RoleOperator)) {
 		return
 	}
@@ -3149,7 +3149,7 @@ func (s *Server) handleFrameworks(w http.ResponseWriter, r *http.Request, adminI
 	writeJSON(w, http.StatusOK, rep)
 }
 
-// handleRisk, çok-faktörlü filo risk skorunu döner (#risk): açık incident'ler,
+// handleRisk, çok-faktörlü filo risk skorunu döner: açık incident'ler,
 // uyum ihlalleri ve karantina durumundan cihaz + filo risk skoru hesaplar.
 func (s *Server) handleRisk(w http.ResponseWriter, r *http.Request, adminID string) {
 	tenant, err := s.callerTenant(r.Context(), adminID)
@@ -3191,7 +3191,7 @@ func (s *Server) handleAdminBehavior(w http.ResponseWriter, r *http.Request, adm
 }
 
 // handleAuditExport, denetim izini KURCALAMA-KANITLI, taşınabilir bir hash-zinciri
-// (JSONL) olarak dışa aktarır (#16). Anahtar bağlıysa (SetAuditExportKey) son
+// (JSONL) olarak dışa aktarır. Anahtar bağlıysa (SetAuditExportKey) son
 // satıra imzalı bir manifest eklenir. Denetçi/WORM arşiv bunu C2'DEN BAĞIMSIZ
 // doğrulayabilir (tools/auditverify). OPERATOR+ gerekir (denetim izi hassas).
 func (s *Server) handleAuditExport(w http.ResponseWriter, r *http.Request, adminID string) {
@@ -3285,7 +3285,7 @@ func (s *Server) handleDeleteSavedSearch(w http.ResponseWriter, r *http.Request,
 	writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
 }
 
-// handleMaintenance, yapılandırılmış bakım/bastırma pencerelerini döner (#18):
+// handleMaintenance, yapılandırılmış bakım/bastırma pencerelerini döner:
 // her pencere için zaman aralığı, kapsam (cihaz/kategori), gerekçe ve şu an ETKİN
 // olup olmadığı. Konsol "neden uyarı gelmiyor?" görünürlüğü.
 func (s *Server) handleMaintenance(w http.ResponseWriter, r *http.Request, _ string) {
@@ -3592,7 +3592,7 @@ func (s *Server) handleResolveEvent(w http.ResponseWriter, r *http.Request, admi
 }
 
 // handleEventCase, bir olaya sorumlu (assignee) ve serbest-metin not atar —
-// vaka/olay yönetimi (#9). OPERATOR+ yetkisi gerektirir.
+// vaka/olay yönetimi. OPERATOR+ yetkisi gerektirir.
 func (s *Server) handleEventCase(w http.ResponseWriter, r *http.Request, adminID string) {
 	var req struct {
 		Assignee string `json:"assignee"`
@@ -3720,7 +3720,7 @@ func (s *Server) handleStream(w http.ResponseWriter, r *http.Request, adminID st
 	if respondErr(w, err) {
 		return
 	}
-	// SEC-007: eşzamanlı SSE bağlantısı üst sınırı (kaynak tükenmesini önle).
+	// eşzamanlı SSE bağlantısı üst sınırı (kaynak tükenmesini önle).
 	if n := atomic.AddInt64(&s.sseConns, 1); n > maxSSEConns {
 		atomic.AddInt64(&s.sseConns, -1)
 		w.Header().Set("Retry-After", "10")
@@ -3779,8 +3779,8 @@ func (s *Server) handleStream(w http.ResponseWriter, r *http.Request, adminID st
 	}
 }
 
-// handleVerifyAudit, denetim izi hash-zincirinin bütünlüğünü doğrular (SEC C-1,
-// ADMIN). Zincir sağlamsa 200 {valid:true}; kırıksa 200 {valid:false, error}.
+// handleVerifyAudit, denetim izi hash-zincirinin bütünlüğünü doğrular
+// (ADMIN). Zincir sağlamsa 200 {valid:true}; kırıksa 200 {valid:false, error}.
 func (s *Server) handleVerifyAudit(w http.ResponseWriter, r *http.Request, adminID string) {
 	if respondErr(w, s.adminSvc.EnsureRole(r.Context(), adminID, admin.RoleAdmin)) {
 		return
@@ -3797,7 +3797,7 @@ func (s *Server) handleVerifyAudit(w http.ResponseWriter, r *http.Request, admin
 }
 
 func (s *Server) handleListAudit(w http.ResponseWriter, r *http.Request, adminID string) {
-	// SEC-009: denetim izi hassastır — OPERATOR+ gerekir.
+	// denetim izi hassastır — OPERATOR+ gerekir.
 	if respondErr(w, s.adminSvc.EnsureRole(r.Context(), adminID, admin.RoleOperator)) {
 		return
 	}

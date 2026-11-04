@@ -76,7 +76,7 @@ func sha256Hex(b []byte) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// İmza-anahtarı rotasyonu (#9): birden çok güvenilen anahtar olduğunda ESKİ
+// İmza-anahtarı rotasyonu: birden çok güvenilen anahtar olduğunda ESKİ
 // anahtarla imzalanmış manifesto YENİ anahtarı da tanıyan doğrulayıcıyla geçerli
 // olmalı; güvenilmeyen anahtar reddedilmeli.
 func TestVerifierMultiKeyRotation(t *testing.T) {

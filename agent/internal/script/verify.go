@@ -3,8 +3,8 @@
 //
 // GÜVENLİK: Script yalnız gömülü public key ile imzası doğrulanırsa çalıştırılır
 // (tek bayt değişse reddedilir). Yürütme timeout + çıktı sınırı + minimal env
-// ile SINIRLANDIRILIR; ancak bu GERÇEK bir izolasyon sınırı DEĞİLDİR (inceleme
-// #7). Gerçek sandbox: ayrı süreç + kısıtlı token / AppContainer / container —
+// ile SINIRLANDIRILIR; ancak bu GERÇEK bir izolasyon sınırı DEĞİLDİR.
+// Gerçek sandbox: ayrı süreç + kısıtlı token / AppContainer / container —
 // kapsam dışıdır. Bu paket imza-kapısını ve sınırlı yürütmeyi sağlar.
 package script
 

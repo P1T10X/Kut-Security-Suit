@@ -156,7 +156,7 @@ func TestSelectWipeFnNotArmedIsSafe(t *testing.T) {
 }
 
 // fimTracker.report: ilk tur taban çizgisi (olay yok); izlenen dosya değişince
-// SECURITY / FILE-INTEGRITY olayı (change=modified) üretilmeli (#3 FIM).
+// SECURITY / FILE-INTEGRITY olayı (change=modified) üretilmeli (FIM).
 func TestFimTrackerReportsChanges(t *testing.T) {
 	dir := t.TempDir()
 	fp := filepath.Join(dir, "f.txt")
@@ -186,7 +186,7 @@ func TestFimTrackerReportsChanges(t *testing.T) {
 }
 
 // persistenceTracker.emit: yeni autostart girdisi POLICY_VIOLATION/HIGH olayı
-// üretmeli; Details kind/name taşımalı (#5).
+// üretmeli; Details kind/name taşımalı.
 func TestPersistenceTrackerEmit(t *testing.T) {
 	buf := collector.NewBuffer(16)
 	p := &persistenceTracker{}

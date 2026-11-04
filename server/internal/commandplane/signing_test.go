@@ -70,7 +70,7 @@ func TestCommandSigningAndVerification(t *testing.T) {
 }
 
 // TestCommandReplayRejected, geçerli bir zarfın TTL penceresi içinde yeniden
-// sunulduğunda (aynı nonce) reddedildiğini doğrular (SEC-005 anti-replay / M2).
+// sunulduğunda (aynı nonce) reddedildiğini doğrular (anti-replay).
 func TestCommandReplayRejected(t *testing.T) {
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {

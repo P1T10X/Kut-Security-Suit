@@ -12,7 +12,7 @@ type Store interface {
 	CreatePartition(ctx context.Context, monthStart time.Time) error
 	DropPartition(ctx context.Context, monthStart time.Time) error
 	// PurgeArtifactsOlderThan, verilen zamandan eski toplanan dosya artefaktlarını
-	// (adli/IR, #4) siler ve silinen sayısını döner. artifacts tablosu dosya
+	// (adli/IR) siler ve silinen sayısını döner. artifacts tablosu dosya
 	// içeriğini (BYTEA) sakladığından partition'lanmaz; DELETE ile budanır.
 	PurgeArtifactsOlderThan(ctx context.Context, cutoff time.Time) (int, error)
 }

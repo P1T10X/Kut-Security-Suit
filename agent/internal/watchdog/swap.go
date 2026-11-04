@@ -2,7 +2,7 @@
 // gözetimi + yeniden başlatma (backoff'lu) ve OTA staged güncellemesinin
 // swap/rollback'i.
 //
-// NOT (tamper koruması, inceleme #5): Bu, kaza sonucu sonlanmalara ve basit
+// NOT (tamper koruması): Bu, kaza sonucu sonlanmalara ve basit
 // müdahalelere karşı İLK savunmadır. SYSTEM/root yetkili bir kullanıcıya karşı
 // gerçek koruma ayrı bir fazda (MiniFilter sürücüsü + PPL/ELAM) gelir.
 package watchdog
@@ -22,7 +22,7 @@ type FileSwapper struct {
 	stageDir   string // update.Prepare'in yazdığı dizin
 	// verify, swap'tan HEMEN ÖNCE staged ikiliyi yeniden doğrular (imza + SHA-256). nil ise
 	// yeniden-doğrulama yapılmaz (imzasız dağıtım — OTA anahtarı yapılandırılmamış). Ayarlıysa
-	// hata dönerse swap REDDEDİLİR (kurcalanmış/forge staged ikili çalıştırılmaz — H4).
+	// hata dönerse swap REDDEDİLİR (kurcalanmış/forge staged ikili çalıştırılmaz).
 	verify func(stagedPath string) error
 }
 
@@ -52,7 +52,7 @@ func (s *FileSwapper) sigPath() string      { return s.stagedPath() + ".sig" }
 
 // Swap, mevcut ikiliyi yedekler ve staged ikiliyi yerine koyar. Yeniden-doğrulama kancası
 // ayarlıysa swap'tan ÖNCE staged ikili yeniden doğrulanır; başarısızsa swap REDDEDİLİR ve
-// kurcalanmış staged artefaktlar temizlenir (H4 — TOCTOU/forge koruması).
+// kurcalanmış staged artefaktlar temizlenir (TOCTOU/forge koruması).
 func (s *FileSwapper) Swap() error {
 	staged := s.stagedPath()
 	if s.verify != nil {

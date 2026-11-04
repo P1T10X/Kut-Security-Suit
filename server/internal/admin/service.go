@@ -1,6 +1,6 @@
 // Package admin, yönetici işlemlerinin iş mantığıdır: RBAC ile korunmuş
 // enrollment token üretimi, karantina komutu verme ve politika yönetimi.
-// Her hassas işlem denetim izine (audit_log) yazılır (#10).
+// Her hassas işlem denetim izine (audit_log) yazılır.
 //
 // Transport'tan (HTTP/gRPC) ve DB'den bağımsızdır: depolama Store arayüzünün
 // arkasındadır ve gerçek bir veritabanı olmadan test edilebilir.
@@ -111,7 +111,7 @@ type Store interface {
 	// (olay başına upsert). Alarm yaşam-döngüsü.
 	SetEventAck(ctx context.Context, eventID, adminID, status string) error
 	// SetEventCase, bir olayın vaka alanlarını (sorumlu + not) ayarlar (upsert;
-	// durum sütununa dokunmaz). Vaka yönetimi (#9).
+	// durum sütununa dokunmaz). Vaka yönetimi.
 	SetEventCase(ctx context.Context, eventID, adminID, assignee, note string) error
 	// CreatePolicy, yeni politika oluşturur. tenantID politikanın sahibi kiracıdır ("" =
 	// platform/paylaşımlı; kiracıya bağlı admin için salt-okunur). Çağıran sunucu-tarafı çözer.
@@ -732,7 +732,7 @@ func (s *Service) CancelWipe(ctx context.Context, adminID, deviceID string) erro
 }
 
 // UpdateEventCase, bir olayın vaka alanlarını (sorumlu analist + not) günceller
-// (OPERATOR+). Vaka yönetimi (#9). Denetim izine yazılır.
+// (OPERATOR+). Vaka yönetimi. Denetim izine yazılır.
 func (s *Service) UpdateEventCase(ctx context.Context, adminID, eventID, assignee, note string) error {
 	if err := s.require(ctx, adminID, RoleOperator); err != nil {
 		return err
@@ -766,7 +766,7 @@ func (s *Service) CollectFile(ctx context.Context, adminID, deviceID, path strin
 		return err
 	}
 	// uzaktan dosya toplama da diğer cihaz komutlarıyla TUTARLI biçimde Scope/ROE'den
-	// geçer (kapsam dışı cihazdan kanıt/dosya toplanmasın; H5 chain-of-custody).
+	// geçer (kapsam dışı cihazdan kanıt/dosya toplanmasın; chain-of-custody).
 	if err := s.guardCmdScope(ctx, adminID, deviceID, cmdenvelope.TypeCollectFile); err != nil {
 		return err
 	}
@@ -955,7 +955,7 @@ func (s *Service) EraseDevice(ctx context.Context, adminID, deviceID string) (Er
 }
 
 // EnsureRole, adminID'nin en az verilen role sahip olduğunu doğrular (yoksa
-// ErrForbidden). Okuma uçlarında RBAC kapısı olarak kullanılır (SEC-009).
+// ErrForbidden). Okuma uçlarında RBAC kapısı olarak kullanılır.
 func (s *Service) EnsureRole(ctx context.Context, adminID string, min Role) error {
 	return s.require(ctx, adminID, min)
 }

@@ -3,7 +3,7 @@ package seccontract
 import "time"
 
 // Evidence, delil kaydı + gözetim zinciridir (CONTRACTS §9). Doğrulama TEK bir
-// "verified" bayrağı değil, AYRI assurance boyutlarıdır (M10): biri diğerini ima
+// "verified" bayrağı değil, AYRI assurance boyutlarıdır: biri diğerini ima
 // etmez. SEALED terminaldir ve değişmezdir.
 type Evidence struct {
 	EvidenceID     string
@@ -17,7 +17,7 @@ type Evidence struct {
 	HashAtReceipt  string
 	StorageHash    string
 
-	// Ayrı assurance boyutları (M10) — karıştırılmaz:
+	// Ayrı assurance boyutları — karıştırılmaz:
 	TransportIntegrityVerified bool // nakil/depolama bütünlüğü (HashAtReceipt==HashAtStorage)
 	SourceHashVerified         bool // kaynak-hash tutarlılığı (yalnız HashAtSource varsa; sahicilik DEĞİL)
 	CollectorIdentityVerified  bool // toplayan kimlik (mTLS/imza)
@@ -30,6 +30,6 @@ type Evidence struct {
 }
 
 // CanSeal, delilin SEALED olabilmesi için zorunlu ön-koşulun sağlanıp sağlanmadığını
-// döner (M13): VERIFIED = TransportIntegrityVerified. Diğer boyutlar ayrı raporlanır;
+// döner: VERIFIED = TransportIntegrityVerified. Diğer boyutlar ayrı raporlanır;
 // "SEALED" bütünsel-sahicilik iddiası taşımaz.
 func (e Evidence) CanSeal() bool { return e.TransportIntegrityVerified && e.State == EvVerified }

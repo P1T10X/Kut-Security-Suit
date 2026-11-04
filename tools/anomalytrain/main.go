@@ -63,7 +63,7 @@ func main() {
 	fmt.Printf("model yazıldı: %s (%d örnek, %d öznitelik, eğitim doğruluğu %.1f%%)\n",
 		*out, len(samples), len(samples[0].features), acc*100)
 
-	// İmzalama (SEC C-7): ajan yalnız imzalı modeli yükler.
+	// İmzalama: ajan yalnız imzalı modeli yükler.
 	if *signKey != "" {
 		if err := signModel(*out, data, *signKey); err != nil {
 			fmt.Fprintf(os.Stderr, "anomalytrain: imzalama: %v\n", err)

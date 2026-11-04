@@ -14,12 +14,12 @@ func sampleRequest() ActionRequest {
 		RequestID: "req-1", TenantID: "t1",
 		Principal: Principal{Type: PrincipalHuman, ID: "admin1"},
 		Action:    scope.ActionWipe, Targets: []string{"dev-b", "dev-a"},
-		RequestedImpact: scope.Passive, // caller düşük beyan etti (H6 tuzağı)
+		RequestedImpact: scope.Passive, // caller düşük beyan etti (tuzak)
 		CreatedAt:       time.Unix(1_700_000_000, 0),
 	}
 }
 
-// INV-006 (H6): EffectiveImpact caller'ın RequestedImpact'ine göre değil, Action'dan
+// INV-006: EffectiveImpact caller'ın RequestedImpact'ine göre değil, Action'dan
 // server-side türetilir; WIPE düşürülemez.
 func TestEffectiveImpactServerDerived(t *testing.T) {
 	r := sampleRequest()
@@ -82,7 +82,7 @@ func TestGrantConsumeSingleUse(t *testing.T) {
 	}
 }
 
-// INV-047 (H12): CAS predicate — expired / tenant / requestHash / policyHash / action /
+// INV-047: CAS predicate — expired / tenant / requestHash / policyHash / action /
 // targets uyumsuz → DENY; ve grant TÜKETİLMEZ.
 func TestGrantConsumeBindingPredicate(t *testing.T) {
 	req := sampleRequest()

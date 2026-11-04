@@ -76,7 +76,7 @@ COMMON_ENV=(
   "KUT_INGEST_TOKEN=smoke-ingest-token"
 )
 if [ -n "${KUT_DATABASE_URL:-}" ]; then
-  # DB modunda yatay-ölçekleme fan-out'unu aç (#10): SSE iddiası gerçek Postgres
+  # DB modunda yatay-ölçekleme fan-out'unu aç: SSE iddiası gerçek Postgres
   # LISTEN/NOTIFY round-trip'ini doğrular (tek düğüm de NOTIFY'ı kendine geri alır).
   env "${COMMON_ENV[@]}" "KUT_DATABASE_URL=$KUT_DATABASE_URL" "KUT_CLUSTER=1" "$WORK/c2$EXT" > "$WORK/c2.log" 2>&1 &
 else
@@ -198,7 +198,7 @@ cust_code="$(curl -sk -o /dev/null -w '%{http_code}' "$B/api/devices/$DID/eviden
   -X POST -H "Authorization: Bearer $TOK" -H 'Content-Type: application/json' -d '{"action":"ACCESSED"}')"
 [ "$cust_code" = "404" ] \
   && pass "/api/devices/{id}/evidence/{art}/custody ekleme ucu bağlı (yolu)" || fail "custody ucu başarısız ($cust_code)"
-# Vaka yönetimi (#9): bir olaya sorumlu+not ata, listede geri oku (db SetEventCase/EventAcks).
+# Vaka yönetimi: bir olaya sorumlu+not ata, listede geri oku (db SetEventCase/EventAcks).
 EVID="$(curl -sk "$B/api/events?limit=50" -H "Authorization: Bearer $TOK" | sed -E 's/.*"id":"([^"]+)".*/\1/')"
 curl -sk "$B/api/events/$EVID/case" -X POST -H "Authorization: Bearer $TOK" \
   -d '{"assignee":"soc@corp","note":"otomatik smoke vaka"}' -o /dev/null
@@ -227,7 +227,7 @@ VID="$(curl -sk "$B/api/verify/open" -X POST -H "Authorization: Bearer $TOK" \
 curl -sk "$B/api/verify/$VID/run" -X POST -H "Authorization: Bearer $TOK" \
   | grep -qE '"outcome":"(VERIFIED|REGRESSED|INCONCLUSIVE)"' \
   && pass "doğrulama check çalıştı + çözüldü (DB Resolve)" || fail "doğrulama run/resolve başarısız"
-# Kurcalama-kanıtlı denetim dışa aktarımı (#16): hash-zincirli JSONL üretilir.
+# Kurcalama-kanıtlı denetim dışa aktarımı: hash-zincirli JSONL üretilir.
 exp="$(curl -sk "$B/api/audit/export" -H "Authorization: Bearer $TOK")"
 echo "$exp" | grep -q '"hash"' \
   && pass "/api/audit/export hash-zinciri üretti" || fail "/api/audit/export başarısız"
@@ -250,7 +250,7 @@ curl -sk "$B/api/detections/test" -H "Authorization: Bearer $TOK" \
   -H 'Content-Type: application/json' -d '{"category":"SECURITY","message":"ajan kurcalama girisimi"}' \
   | grep -q "KUT-0001" \
   && pass "/api/detections/test kuralı eşleştirdi" || fail "/api/detections/test başarısız"
-# Retro-hunt (#1): mevcut kuralları geçmiş olaylara uygula (QueryEvents + değerlendirme).
+# Retro-hunt: mevcut kuralları geçmiş olaylara uygula (QueryEvents + değerlendirme).
 curl -sk "$B/api/hunt" -X POST -H "Authorization: Bearer $TOK" \
   -H 'Content-Type: application/json' -d '{"mode":"rules","limit":500}' \
   | grep -q '"scanned"' \
@@ -267,20 +267,20 @@ curl -sk "$B/api/ai/analyze" -X POST -H "Authorization: Bearer $TOK" \
   -d '{"task":"mitre_mapping","input":"powershell encoded komut ve mimikatz"}' \
   | grep -q '"recommendation"' \
   && pass "/api/ai/analyze öneri üretti (yürütmesiz)" || fail "/api/ai/analyze başarısız"
-# Kayıtlı aramalar (#22 SIEM): bir hunt sorgusu kaydet + listede gör.
+# Kayıtlı aramalar (SIEM): bir hunt sorgusu kaydet + listede gör.
 curl -sk "$B/api/hunt/saved" -X POST -H "Authorization: Bearer $TOK" \
   -H 'Content-Type: application/json' \
   -d '{"name":"Kritik olaylar","filter":{"mode":"query","severity":"CRITICAL"}}' >/dev/null
 curl -sk "$B/api/hunt/saved" -H "Authorization: Bearer $TOK" | grep -q "Kritik olaylar" \
   && pass "/api/hunt/saved kayıtlı arama kalıcılaştı" || fail "/api/hunt/saved başarısız"
-# Olay korelasyonu (#2): incident listeleme ucu yanıt versin.
+# Olay korelasyonu: incident listeleme ucu yanıt versin.
 curl -sk "$B/api/incidents" -H "Authorization: Bearer $TOK" | grep -q '"incidents"' \
   && pass "/api/incidents korelasyon ucu döndü" || fail "/api/incidents başarısız"
 curl -sk "$B/api/incidents/does-not-exist/timeline" -H "Authorization: Bearer $TOK" | grep -q "bulunamadı" \
   && pass "/api/incidents/{id}/timeline ucu bağlı (404 yolu)" || fail "/api/incidents/{id}/timeline başarısız"
 curl -sk "$B/api/ueba/admins" -H "Authorization: Bearer $TOK" | grep -q "profiles" \
   && pass "/api/ueba/admins yönetici davranış analitiği döndü" || fail "/api/ueba/admins başarısız"
-# Zamanlanmış/dışa aktarılabilir rapor (#7): duruş raporu HTML üretimi.
+# Zamanlanmış/dışa aktarılabilir rapor: duruş raporu HTML üretimi.
 curl -sk "$B/api/report" -H "Authorization: Bearer $TOK" | grep -q "KUT Security Suite" \
   && pass "/api/report duruş raporu üretti" || fail "/api/report başarısız"
 curl -sk "$B/api/report?format=json" -H "Authorization: Bearer $TOK" | grep -q '"devices_total"' \
@@ -305,7 +305,7 @@ curl -sk "$B/api/metrics/trends?days=7" -H "Authorization: Bearer $TOK" | grep -
   && pass "/api/metrics/trends MTTD/MTTR trendi döndü" || fail "/api/metrics/trends başarısız"
 curl -sk "$B/api/maintenance" -H "Authorization: Bearer $TOK" | grep -q "windows" \
   && pass "/api/maintenance bakım pencereleri ucu döndü" || fail "/api/maintenance başarısız"
-# Harici log alımı (#21 SIEM): JSON log gönder, normalize edilip yazılmalı.
+# Harici log alımı (SIEM): JSON log gönder, normalize edilip yazılmalı.
 curl -sk "$B/api/ingest" -X POST -H "Authorization: Bearer smoke-ingest-token" \
   -H "Content-Type: application/json" \
   -d '[{"source":"fw-test","category":"NETWORK_CONN","severity":"high","message":"smoke ingest"}]' \

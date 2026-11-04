@@ -11,7 +11,7 @@ const unitSep = 0x1f
 // AuditChainHash, bir denetim kaydının zincir hash'ini hesaplar:
 // SHA-256(prevHash || kanonik(alanlar)). Her kayıt bir öncekinin hash'ini
 // içerdiğinden, herhangi bir kaydın (silme/değiştirme) sonrası zincir kırılır —
-// kurcalama-kanıtı bir denetim izi sağlar (SEC C-1). İlk kayıt için prev nil'dir.
+// kurcalama-kanıtı bir denetim izi sağlar. İlk kayıt için prev nil'dir.
 // Not: id hash'e dahil DEĞİLDİR (DB'de id insert'te atanır); sıra/bütünlük
 // prev-hash bağı + alanlar + zaman damgasıyla korunur.
 // Çapraz-kiracı log naklini (transplant) önlemek için tenant_id de zincire dahil edilir.

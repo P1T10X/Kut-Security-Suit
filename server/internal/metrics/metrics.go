@@ -26,10 +26,10 @@ var (
 	alertsRaised   atomic.Int64
 	autoQuarantine atomic.Int64
 	iocHits        atomic.Int64
-	alertsSuppress atomic.Int64 // korelasyonla bastırılan yinelenen alarmlar (#2)
+	alertsSuppress atomic.Int64 // korelasyonla bastırılan yinelenen alarmlar
 	thresholdGated atomic.Int64 // tekrar-eşiği aşılmadığı için alarma dönüşmeyen tespitler
 	bitsGated      atomic.Int64 // çok-aşama ön-koşulu (bit) sağlanmadığı için bekletilen tespitler
-	// Yatay ölçekleme (#10) küme fan-out sayaçları: yayınlanan (NOTIFY), alınan
+	// Yatay ölçekleme küme fan-out sayaçları: yayınlanan (NOTIFY), alınan
 	// (LISTEN→yerel dağıtım) ve yerel-dağıtıma-düşülen (NOTIFY başarısız). Fallback
 	// sayacının artması DB'ye NOTIFY erişiminde sorun olduğunu gösterir.
 	clusterPublished atomic.Int64
@@ -269,7 +269,7 @@ func IncAutoQuarantine() { autoQuarantine.Add(1) }
 // IncIocHit, tehdit istihbaratı (IoC) eşleşme sayacını artırır.
 func IncIocHit() { iocHits.Add(1) }
 
-// IncAlertSuppressed, korelasyonla bastırılan yinelenen alarm sayacını artırır (#2).
+// IncAlertSuppressed, korelasyonla bastırılan yinelenen alarm sayacını artırır.
 func IncAlertSuppressed() { alertsSuppress.Add(1) }
 
 // IncThresholdGated, tekrar-eşiği (threshold) aşılmadığı için henüz alarma
@@ -280,13 +280,13 @@ func IncThresholdGated() { thresholdGated.Add(1) }
 // tespit sayacını artırır (aşamalı-saldırı kapılama görünürlüğü).
 func IncBitsGated() { bitsGated.Add(1) }
 
-// IncClusterPublished, kümeye NOTIFY ile yayınlanan bildirim sayacını artırır (#10).
+// IncClusterPublished, kümeye NOTIFY ile yayınlanan bildirim sayacını artırır.
 func IncClusterPublished() { clusterPublished.Add(1) }
 
-// IncClusterReceived, LISTEN'den alınıp yerel dağıtılan bildirim sayacını artırır (#10).
+// IncClusterReceived, LISTEN'den alınıp yerel dağıtılan bildirim sayacını artırır.
 func IncClusterReceived() { clusterReceived.Add(1) }
 
-// IncClusterFallback, NOTIFY başarısız olup yerel dağıtıma düşülen sayacını artırır (#10).
+// IncClusterFallback, NOTIFY başarısız olup yerel dağıtıma düşülen sayacını artırır.
 func IncClusterFallback() { clusterFallback.Add(1) }
 
 // Snapshot, /metrics çıktısını üretmek için depodan alınan anlık gauge'lardır.

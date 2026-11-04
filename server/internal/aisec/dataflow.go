@@ -16,7 +16,7 @@ const (
 const (
 	CapCredentialRead Cap = "credential.read"  // hassas sır/kimlik-bilgisi okuma
 	CapExternalWrite  Cap = "external.write"   // dış kanal (HTTP/exfil) yazma
-	CapSanitize       Cap = "context.sanitize" // kirli (tainted) bağlamı doğrulayıp temizleme yetkisi (SEC-007)
+	CapSanitize       Cap = "context.sanitize" // kirli (tainted) bağlamı doğrulayıp temizleme yetkisi
 )
 
 // EvaluateExfiltration, INV-AG-004'ü uygular: tainted/untrusted bir context'te
@@ -53,7 +53,7 @@ type Sanitizer interface {
 	Sanitize(input string) (cleaned string, ok bool)
 }
 
-// SanitizeContext, SEC-007'yi çözer: Tainted bir bağlamı kontrollü şekilde Untrusted düzeyine
+// SanitizeContext, Tainted bir bağlamı kontrollü şekilde Untrusted düzeyine
 // yükseltir. Asla doğrudan Trusted'a yükseltmez (INV-AG-001 ihlal edilemez).
 // Yalnızca etkin yetenek kümesinde CapSanitize bulunan agent'lar ve başarılı doğrulama ile çalışır.
 func SanitizeContext(current TrustLevel, eff CapSet, sanitizer Sanitizer, input string) (TrustLevel, string, bool) {

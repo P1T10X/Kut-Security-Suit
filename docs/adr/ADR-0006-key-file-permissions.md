@@ -10,7 +10,7 @@ Private key files (TLS server keys, CA keys) were being loaded directly without 
 We will enforce safe file permissions (`0600` or `0400`) on all loaded private key files (`CAKeyPath` and `ServerKeyPath`).
 Consistent with the project's fail-closed ethos, this check is **enforced by default**: an insecure permission (e.g., `0644`) halts startup with an actionable error. An operator who knowingly accepts relaxed permissions can downgrade the check to warn-only by setting `KUT_ALLOW_INSECURE_KEY_PERMISSIONS=1` (not recommended).
 On Windows environments, where POSIX-style permissions do not natively apply, this check is bypassed via a `runtime.GOOS` guard.
-(Revised M4: the earlier default was warn-only — fail-open — which contradicted the fail-closed principle; the default is now strict with an explicit opt-out.)
+(Revised: the earlier default was warn-only — fail-open — which contradicted the fail-closed principle; the default is now strict with an explicit opt-out.)
 
 ## Consequences
 - **Positive:** Reduces the risk of local key compromise by actively checking file permissions.

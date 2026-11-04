@@ -1,7 +1,7 @@
 # ADR 0008: AI Model Provider Abstraction and Model Router
 
 ## Status
-Proposed (Wave 4)
+Proposed
 
 ## Context
 KUT Security Fabric requires AI integration for SOC summarization, triage recommendations, causality graph analysis, and autonomous security decisions. Currently, the platform connects to a single external HTTP endpoint (`services/ai/app.py` via `aibrain.HTTPProvider`) with no model diversity, no local LLM support, no data redaction, and no sensitivity-based routing.

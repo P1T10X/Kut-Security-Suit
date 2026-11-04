@@ -29,7 +29,7 @@ type Bus struct {
 	subs map[int]chan Notice
 	next int
 	// sink, PublishEvent/PublishDevice'in bildirimi nereye ileteceğini belirler.
-	// Varsayılan yerel fan-out (Deliver). HA modunda (#10) SetSink ile küme
+	// Varsayılan yerel fan-out (Deliver). HA modunda SetSink ile küme
 	// yayıncısına (Postgres NOTIFY) yönlendirilir; yerel dağıtım o zaman LISTEN
 	// dinleyicisinden gelen Deliver çağrılarıyla yapılır.
 	sink func(Notice)
@@ -42,7 +42,7 @@ func New() *Bus {
 	return b
 }
 
-// SetSink, Publish* çağrılarının bildirimi ileteceği hedefi değiştirir (#10 HA).
+// SetSink, Publish* çağrılarının bildirimi ileteceği hedefi değiştirir (HA).
 // Küme modunda yayıncı NOTIFY'a yazar; yerel abonelere dağıtım LISTEN tarafından
 // çağrılan Deliver ile olur. nil verilmesi yerel dağıtıma geri döner.
 func (b *Bus) SetSink(sink func(Notice)) {
@@ -78,7 +78,7 @@ func (b *Bus) Subscribe() (<-chan Notice, func()) {
 }
 
 // Deliver, bildirimi bu düğümdeki tüm YEREL abonelere bloklamadan iletir. Küme
-// modunda (#10) LISTEN dinleyicisi uzak düğümlerden gelen bildirimleri buraya
+// modunda LISTEN dinleyicisi uzak düğümlerden gelen bildirimleri buraya
 // enjekte eder; tek-düğüm modunda Publish* doğrudan buraya gelir.
 func (b *Bus) Deliver(n Notice) {
 	b.mu.Lock()

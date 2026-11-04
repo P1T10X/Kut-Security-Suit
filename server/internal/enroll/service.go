@@ -19,7 +19,7 @@ import (
 var ErrInvalidToken = errors.New("enroll: geçersiz veya kullanılmış enrollment token")
 
 // ErrDeviceRevoked, iptal edilmiş bir cihaz sertifika yenilemeye çalıştığında
-// döner (SEC-002 iptal bypass koruması).
+// döner (iptal bypass koruması).
 var ErrDeviceRevoked = errors.New("enroll: cihaz iptal edilmiş — yenileme reddedildi")
 
 // ErrTenantMismatch, kayıt token'ının kiracısı ile mevcut cihaz kaydının kiracısı
@@ -37,7 +37,7 @@ type Store interface {
 
 	// UpsertEnrollingDevice, cihazı mac blind index'e göre oluşturur veya
 	// bulur ve şifreli alanlarını günceller. Atanmış device_id döner.
-	// KİRACI DUVARI: MAC yolunda tekillik KİRACI BAŞINADIR (kanonik kiracı + MAC; Kiracı Duvarı II):
+	// KİRACI DUVARI: MAC yolunda tekillik KİRACI BAŞINADIR (kanonik kiracı + MAC):
 	// aynı MAC başka kiracıda AYRI bir satırdır ve mevcut satıra DOKUNULMAZ (re-home yok) —
 	// bu yolda ErrTenantMismatch dönmez. ErrTenantMismatch yalnız token'a ÖNCEDEN BAĞLI cihaz
 	// yolunda (PreferredDeviceID) döner: bağlı cihazın kiracısı in.TenantID ile AYNI değilse
@@ -211,7 +211,7 @@ func (s *Service) Renew(ctx context.Context, deviceID string, csrPEM []byte) (*R
 	if len(csrPEM) == 0 {
 		return nil, errors.New("enroll: CSR boş")
 	}
-	// İptal bypass koruması (SEC-002): iptal edilmiş bir cihaz, revocation
+	// İptal bypass koruması: iptal edilmiş bir cihaz, revocation
 	// cache tazelenmeden (≤60 sn) yenileme çağırıp yeni parmak-izli bir
 	// sertifika alarak iptali kalıcı atlatmamalı. DB'den kesin kontrol:
 	// cihazın iptal edilmemiş aktif sertifikası yoksa yenileme reddedilir.

@@ -47,7 +47,7 @@ func TestToolFirewall(t *testing.T) {
 			expectedAllow: false,
 		},
 		{
-			// Dual-auth gerektiren tool tek çağrıyla yetkilenemez → fail-closed reddi (M3).
+			// Dual-auth gerektiren tool tek çağrıyla yetkilenemez → fail-closed reddi.
 			name: "Dual-auth tool denied pending second approval (fail-closed)",
 			call: ToolCall{
 				AgentRole:  "response",

@@ -50,7 +50,7 @@ func authedGET(t *testing.T, url, token string) (*http.Response, error) {
 	return http.DefaultClient.Do(req)
 }
 
-// SEC-008: konsol CSP'si per-request nonce kullanır; script-src'de 'unsafe-inline'
+// konsol CSP'si per-request nonce kullanır; script-src'de 'unsafe-inline'
 // YOKTUR ve gövdedeki script tag'i aynı nonce'u taşır (placeholder değiştirilmiş).
 // /api/mitre/coverage: kimlik doğrulanmış admin ATT&CK teknik kataloğunu alır;
 // kimliksiz istek reddedilir.
@@ -351,7 +351,7 @@ func TestAgentSecEventsIngestEndpoint(t *testing.T) {
 
 // TestAgentSecEventsRequiresOperator, durum-değiştiren agentsec ingest ucunun VIEWER'a
 // kapalı olduğunu doğrular: salt-okuma bir analist sahte exfil zinciri üretip/gerçek
-// bulguyu bastıramamalı (bütünlük — SEC). VIEWER 403, OPERATOR geçer.
+// bulguyu bastıramamalı (bütünlük). VIEWER 403, OPERATOR geçer.
 func TestAgentSecEventsRequiresOperator(t *testing.T) {
 	srv, store := newServer(t)
 	srv.SetAgentSec(aisec.NewService())
@@ -1009,7 +1009,7 @@ func TestLoginBruteForceReturns429(t *testing.T) {
 }
 
 // Denetim izi doğrulama ucu: ADMIN gerektirir; doğrulayıcı sonucunu yansıtır.
-// SEC-003: pasifleştirilen bir yöneticinin durumsuz token'ı, TTL dolmadan da
+// pasifleştirilen bir yöneticinin durumsuz token'ı, TTL dolmadan da
 // authed tarafından anında reddedilmeli (salt-okuma uçları dahil).
 func TestDeactivatedAdminTokenRejected(t *testing.T) {
 	ts, store := setup(t)
@@ -1061,7 +1061,7 @@ func TestAuditVerifyEndpoint(t *testing.T) {
 	}
 }
 
-// SEC-009: denetim izi ve enrollment token meta verisi VIEWER'a kapalı (OPERATOR+).
+// denetim izi ve enrollment token meta verisi VIEWER'a kapalı (OPERATOR+).
 func TestAuditAndTokensRequireOperator(t *testing.T) {
 	ts, store := setup(t)
 	defer ts.Close()

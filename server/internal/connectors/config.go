@@ -128,7 +128,7 @@ type Binding struct {
 
 // ResolveBinding, bağlayıcının kiracı bağını çözer. enforce açıkken kiracısız bağlayıcı
 // ErrTenantRequired ile REDDEDİLİR (dağıtım kiracısına sessizce düşmez); kapalıyken kiracısız
-// bağlayıcı dağıtım kiracısıyla damgalanır ve Kiracı Duvarı III öncesi cihaz kimliğini korur.
+// bağlayıcı dağıtım kiracısıyla damgalanır ve kiracı damgalama öncesi cihaz kimliğini korur.
 func (c SourceConfig) ResolveBinding(deployDefault string, enforce bool) (Binding, error) {
 	if enforce && strings.TrimSpace(c.Tenant) == "" {
 		return Binding{}, fmt.Errorf("%w: %q", ErrTenantRequired, c.Name)

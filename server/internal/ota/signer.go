@@ -1,5 +1,5 @@
-// Package ota, OTA güncelleme sürümlerinin imzalanmasını sağlar (inceleme #4:
-// yalnız SHA-256 bütünlüğü yeterli değildir; kimlik için imza gerekir).
+// Package ota, OTA güncelleme sürümlerinin imzalanmasını sağlar.
+// Yalnız SHA-256 bütünlüğü yeterli değildir; kimlik için imza gerekir.
 //
 // İmza şeması Ed25519'dur. Özel anahtar sistem yöneticisindedir (üretimde
 // HSM/sır yöneticisi); ajanlara gömülü olan yalnız public key'dir.

@@ -152,7 +152,7 @@ func checkOffboard(cfg envConfig, deviceID string) bool {
 }
 
 // selfBinaryHash, ajanın kendi çalışan ikilisinin SHA-256'sını (hex) döner —
-// öz-tasdik (#4). Hesaplanamazsa boş döner (sunucu boş hash'i yok sayar).
+// öz-tasdik. Hesaplanamazsa boş döner (sunucu boş hash'i yok sayar).
 func selfBinaryHash() string {
 	exe, err := os.Executable()
 	if err != nil {
@@ -270,7 +270,7 @@ func run() error {
 
 	clock := agentclock.New(time.Now)
 	buf := collector.NewBuffer(10000)
-	selfHash := selfBinaryHash() // öz-tasdik (#4): kendi ikilisinin SHA-256'sı (bir kez)
+	selfHash := selfBinaryHash() // öz-tasdik: kendi ikilisinin SHA-256'sı (bir kez)
 	// Motor birden çok goroutine'den (heartbeat + politika akışı) erişildiğinden
 	// atomik tutulur; politika akışı sıcak değiştirir, enforcement okur.
 	var engine atomic.Pointer[policy.Engine]
@@ -283,7 +283,7 @@ func run() error {
 	if os.Getenv("KUT_ANOMALY_DISABLE") == "" {
 		var scorer anomaly.Scorer
 		if mp := os.Getenv("KUT_ANOMALY_MODEL"); mp != "" {
-			// SEC C-7: model YALNIZ Ed25519 imzası doğrulanınca yüklenir. İmzasız
+			// model YALNIZ Ed25519 imzası doğrulanınca yüklenir. İmzasız
 			// ya da doğrulanamayan model YÜKLENMEZ (fail-closed) — tespiti sıfırlayan
 			// kurcalamayı önler; istatistiksel scorer'a düşülür.
 			pubB64 := os.Getenv("KUT_ANOMALY_PUBKEY")
@@ -334,7 +334,7 @@ func run() error {
 	if paths := splitCSV(os.Getenv("KUT_FIM_PATHS")); len(paths) > 0 {
 		fimTr = &fimTracker{paths: paths}
 	}
-	// İçerik-tarama (YARA-tarzı; #13): KUT_YARA_PATHS + KUT_YARA_RULES (imzalı)
+	// İçerik-tarama (YARA-tarzı): KUT_YARA_PATHS + KUT_YARA_RULES (imzalı)
 	// + KUT_YARA_PUBKEY ayarlıysa yollar imza kurallarına karşı taranır; eşleşme
 	// SECURITY olayı olur. Kurallar YALNIZ imza doğrulanınca yüklenir (fail-closed):
 	// imza/anahtar geçersizse tarama DEVRE DIŞI kalır (kural gömülü değildir).
@@ -362,21 +362,21 @@ func run() error {
 			}
 		}
 	}
-	// Kalıcılık (autostart) izleme (#5; varsayılan AÇIK, KUT_PERSISTENCE_DISABLE ile
+	// Kalıcılık (autostart) izleme (varsayılan AÇIK, KUT_PERSISTENCE_DISABLE ile
 	// kapatılır). Run anahtarları/görevler/cron/systemd; yeni girdiler POLICY_VIOLATION
 	// olayı olarak bildirilir. İlk tarama taban çizgisidir.
 	var persistTr *persistenceTracker
 	if os.Getenv("KUT_PERSISTENCE_DISABLE") == "" {
 		persistTr = &persistenceTracker{}
 	}
-	// DNS telemetri + DGA tespiti (#19; opt-in KUT_DNS_MONITOR=1). OS DNS önbelleği
+	// DNS telemetri + DGA tespiti (opt-in KUT_DNS_MONITOR=1). OS DNS önbelleği
 	// periyodik taranır; YENİ alanlar NETWORK_DISCOVERY, DGA-şüphelileri SECURITY
 	// olayı olur. İlk tarama taban çizgisidir. (Toplama Windows'ta; skorlama her yerde.)
 	var dnsTr *dnsTracker
 	if os.Getenv("KUT_DNS_MONITOR") == "1" {
 		dnsTr = &dnsTracker{sc: dnsmon.NewScanner()}
 	}
-	// Çıkarılabilir medya DLP (#20; opt-in KUT_DLP_PATHS). Verilen yollar (ör. USB
+	// Çıkarılabilir medya DLP (opt-in KUT_DLP_PATHS). Verilen yollar (ör. USB
 	// bağlama noktaları) hassas veri (kredi kartı/TCKN/IBAN/e-posta) için taranır;
 	// bulgu POLICY_VIOLATION olur (yalnız TÜR+SAYI — ham değer yazılmaz). I/O-ağır:
 	// uyum kadansında çalışır.
@@ -405,7 +405,7 @@ func run() error {
 
 	// OTA doğrulayıcı (opsiyonel): public key(ler) verilmişse güncelleme imzaları
 	// doğrulanır. KUT_UPDATE_PUBKEY virgülle ayrılmış birden çok anahtar alabilir —
-	// imza-anahtarı ROTASYONU örtüşmesi (#9): eski + yeni anahtar aynı anda güvenilir.
+	// imza-anahtarı ROTASYONU örtüşmesi: eski + yeni anahtar aynı anda güvenilir.
 	var updVerifier *update.Verifier
 	if cfg.updatePubKey != "" {
 		var pubs []ed25519.PublicKey
@@ -545,7 +545,7 @@ func run() error {
 				OsVersion:    osVersion,
 			},
 			CurrentPolicyVersion: engine.Load().Version(),
-			BinaryHash:           selfHash, // öz-tasdik (#4): kendi ikilisinin SHA-256'sı
+			BinaryHash:           selfHash, // öz-tasdik: kendi ikilisinin SHA-256'sı
 			AckedCommandIds:      acks,
 			CommandResults:       toProtoResults(results),
 		})
@@ -555,7 +555,7 @@ func run() error {
 		}
 		clog.ConfirmAcks(acks)                  // sunucu onayları aldı; kuyruktan çıkar
 		clog.ConfirmResults(resultIDs(results)) // sonuçlar bildirildi; kuyruktan çıkar
-		// Sunucu saatini çıpa al (yerel saate güvenilmez, inceleme #3).
+		// Sunucu saatini çıpa al (yerel saate güvenilmez).
 		if resp.GetServerTime() != nil {
 			clock.Sync(resp.GetServerTime().AsTime())
 		}
@@ -568,17 +568,17 @@ func run() error {
 		} else if n > 0 {
 			log.Printf("enforcement: %d yasaklı süreç sonlandırıldı", n)
 		}
-		// OTA: güncelleme var mı, varsa İMZASINI doğrula, indir ve hazırla (#4).
+		// OTA: güncelleme var mı, varsa İMZASINI doğrula, indir ve hazırla.
 		if updVerifier != nil {
 			checkUpdate(hbCtx, cli, ident, updVerifier, downloader, stageDir, buf)
 		}
 		// Pasif ağ keşfi: yeni cihazları tespit et ve raporla (mimari 4.3).
 		scanNetwork(neighbors, netTracker, buf)
-		// Giden bağlantı telemetrisi (etkinse): yeni bağlantıları yayınla (#3).
+		// Giden bağlantı telemetrisi (etkinse): yeni bağlantıları yayınla.
 		if connTr != nil {
 			connTr.report(buf)
 		}
-		// Çıkarılabilir medya izleme (etkinse): yeni takılan USB medyayı bildir (#7).
+		// Çıkarılabilir medya izleme (etkinse): yeni takılan USB medyayı bildir.
 		if usbTr != nil {
 			usbTr.report(buf, safeMode)
 		}
@@ -586,7 +586,7 @@ func run() error {
 		if fimTr != nil {
 			fimTr.report(buf)
 		}
-		// Kalıcılık izleme (etkinse): yeni autostart girdilerini bildir (#5).
+		// Kalıcılık izleme (etkinse): yeni autostart girdilerini bildir.
 		if persistTr != nil {
 			persistTr.report(buf)
 		}
@@ -610,7 +610,7 @@ func run() error {
 }
 
 // flushEvents, tamponlanmış olayları gönderir ve yalnız sunucunun onayladığı
-// sıraya kadar tampondan siler (store-and-forward, inceleme #9).
+// sıraya kadar tampondan siler (store-and-forward).
 func flushEvents(ctx context.Context, cli kutv1.AgentServiceClient, ident *identity, buf *collector.Buffer) {
 	pending := buf.Pending(500)
 	if len(pending) == 0 {

@@ -22,7 +22,7 @@ func TestSourceIDTenant(t *testing.T) {
 			t.Errorf("SourceIDTenant(%q,%q)=%q, want %q", c.explicit, c.deploy, got, c.want)
 		}
 	}
-	// Legacy kaynak: kimlik Kiracı Duvarı III öncesiyle bire bir aynı.
+	// Legacy kaynak: kimlik kiracı damgalama öncesiyle bire bir aynı.
 	id := SourceUUID("fw1")
 	if got := TenantDeviceID(SourceIDTenant("", "acme"), id); got != id {
 		t.Fatalf("legacy kimlik değişmemeli: %s != %s", got, id)

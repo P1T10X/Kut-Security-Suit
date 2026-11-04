@@ -13,7 +13,7 @@ import (
 const fw1JSON = `[{"source":"fw1","category":"SECURITY","severity":"HIGH","message":"deny"}]`
 
 // KUT_TENANT_ID=acme dağıtımında legacy (kiracısız) statik token olayları dağıtım
-// kiracısıyla DAMGALAR ama cihaz kimliği Kiracı Duvarı III öncesiyle AYNI kalır (geçmiş bölünmez);
+// kiracısıyla DAMGALAR ama cihaz kimliği kiracı damgalama öncesiyle AYNI kalır (geçmiş bölünmez);
 // kiracıya bağlı token'lar ad-alanlanır ve aynı kaynak adını kullanan iki kiracı ayrı kalır.
 func TestIngestDeviceIDContinuity(t *testing.T) {
 	srv, store := newServer(t)

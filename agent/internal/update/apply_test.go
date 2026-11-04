@@ -15,7 +15,7 @@ import (
 	"kut.corp/suite/otawire"
 )
 
-// payloadServer, sabit bir payload sunan test HTTPS sunucusu (SEC-012: indirici
+// payloadServer, sabit bir payload sunan test HTTPS sunucusu (indirici
 // yalnız https kabul eder).
 func payloadServer(t *testing.T, payload []byte) *httptest.Server {
 	t.Helper()
@@ -103,7 +103,7 @@ func TestPrepareRejectsHashMismatch(t *testing.T) {
 	}
 }
 
-// TestVerifyStaged, swap-anı yeniden doğrulamanın (H4) geçerli staged seti kabul ettiğini,
+// TestVerifyStaged, swap-anı yeniden doğrulamanın geçerli staged seti kabul ettiğini,
 // staged ikili veya imza kurcalanınca reddettiğini, ve yanlış anahtarla doğrulamanın
 // başarısız olduğunu doğrular.
 func TestVerifyStaged(t *testing.T) {

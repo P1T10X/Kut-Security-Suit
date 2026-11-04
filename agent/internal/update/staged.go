@@ -1,6 +1,6 @@
 package update
 
-// staged.go — swap-anı YENİDEN DOĞRULAMA (inceleme #5 / H4). İmza doğrulaması Prepare'de
+// staged.go — swap-anı YENİDEN DOĞRULAMA. İmza doğrulaması Prepare'de
 // (ajan süreci) yapılır; ancak staged ikiliyi AYRI bir watchdog süreci (genelde SYSTEM/root)
 // swap edip çalıştırır. Stage ile swap arasında staged dosya yerel olarak değiştirilirse
 // (TOCTOU), yalnız Prepare-anı doğrulaması bunu kaçırır. VerifyStaged, watchdog'un swap'tan

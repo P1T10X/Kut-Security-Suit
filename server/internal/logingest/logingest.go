@@ -110,7 +110,7 @@ func TenantDeviceID(tenantID, deviceID string) string {
 // (TenantDeviceID'ye verilecek değer). Ad-alanlama YALNIZ kaynak AÇIKÇA bir kiracıya
 // bağlıysa (ingest token'ının ya da bağlayıcının kiracısı dolu) VE bu kiracı dağıtımın
 // varsayılan kiracısından farklıysa uygulanır. Kiracısız (legacy/statik token, kiracısız
-// bağlayıcı) kaynaklar dağıtım kiracısıyla DAMGALANIR ama kimlikleri Kiracı Duvarı III öncesiyle AYNI
+// bağlayıcı) kaynaklar dağıtım kiracısıyla DAMGALANIR ama kimlikleri kiracı damgalama öncesiyle AYNI
 // kalır ("" döner → TenantDeviceID kimliği değiştirmez): KUT_TENANT_ID=acme dağıtımında
 // mevcut kaynakların geçmişi/eşik/korelatör durumu bölünmez.
 func SourceIDTenant(explicit, deployTenant string) string {

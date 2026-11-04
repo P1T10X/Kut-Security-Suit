@@ -6,7 +6,7 @@ import (
 )
 
 // Denetim izi hash-zinciri bütünlüğü: normalde doğrulanır; bir kayıt kurcalanınca
-// (silme/değiştirme) zincir kırılır ve VerifyAuditChain hata döner (SEC C-1).
+// (silme/değiştirme) zincir kırılır ve VerifyAuditChain hata döner.
 func TestAuditChainDetectsTampering(t *testing.T) {
 	ctx := context.Background()
 	s := New()

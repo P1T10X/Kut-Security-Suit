@@ -94,7 +94,7 @@ func TestBrokerFanoutRoundTrip(t *testing.T) {
 	}
 }
 
-// #10'un ASIL garantisi: A düğümünde yayınlanan bir olay, paylaşılan kanalı
+// HA modunun ASIL garantisi: A düğümünde yayınlanan bir olay, paylaşılan kanalı
 // dinleyen B düğümündeki yerel abonelere de ulaşmalı (çok-düğüm fan-out).
 // Aynı fakeBus (paylaşılan Postgres kanalı gibi) iki broker'ı köprüler.
 func TestBrokerCrossNodeFanout(t *testing.T) {

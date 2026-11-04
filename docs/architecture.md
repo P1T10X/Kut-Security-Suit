@@ -109,7 +109,7 @@ ileride sürücü) platform-spesifik dosyalarda soyutlanır.
 - **İmzalı script yürütme:** `scriptwire` + `agent/internal/script`
   — Ed25519 imza doğrulama (tek bayt değişse ret) + sınırlı yürütme (timeout,
   çıktı sınırı, minimal env); `RUN_SIGNED_SCRIPT` komutu ajanda bağlı, `tools/scriptsign`
-  imzalar. **Sınır (#7):** gerçek izolasyon sınırı DEĞİL; süreç-ağacı sonlandırma
+  imzalar. **Sınır:** gerçek izolasyon sınırı DEĞİL; süreç-ağacı sonlandırma
   ve sandbox (Job Object / AppContainer / container) kapsam dışıdır.
 - **Watchdog:** `agent/internal/watchdog` — süreç gözetimi + backoff'lu
   yeniden başlatma (Supervisor, sahte runner ile test), staged swap + yedek +
@@ -261,7 +261,7 @@ driver later) are abstracted in platform-specific files.
 - **Signed script execution:** `scriptwire` + `agent/internal/script` —
   Ed25519 signature verification (rejected if a single byte changes) + constrained
   execution (timeout, output limit, minimal env); the `RUN_SIGNED_SCRIPT` command wired
-  in the agent, `tools/scriptsign` signs. **Boundary (#7):** NOT a real isolation
+  in the agent, `tools/scriptsign` signs. **Boundary:** NOT a real isolation
   boundary; process-tree termination and a sandbox (Job Object / AppContainer /
   container) are out of scope.
 - **Watchdog:** `agent/internal/watchdog` — process supervision + backoff

@@ -67,7 +67,7 @@ func (b *Gateway) Authorize(req seccontract.ActionRequest) seccontract.Authoriza
 		return seccontract.Deny(seccontract.ReasonScopeDeny)
 	}
 
-	// 3) Canlı gateway: etki Action'dan server-side türetilir (H6); TargetCount
+	// 3) Canlı gateway: etki Action'dan server-side türetilir; TargetCount
 	// blast-radius içindir. Confirmed yalnız insan yumuşak-tavanını etkiler.
 	d := b.gw.Authorize(authz.Request{
 		Requester:   r,

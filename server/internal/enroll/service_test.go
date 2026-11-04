@@ -101,7 +101,7 @@ func makeCSR(t *testing.T) []byte {
 	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: der})
 }
 
-// SEC-002: iptal edilmiş bir cihaz sertifika yenileyerek iptali atlatamamalı.
+// iptal edilmiş bir cihaz sertifika yenileyerek iptali atlatamamalı.
 func TestRenewRejectedForRevokedDevice(t *testing.T) {
 	store := newMemStore()
 	svc, _ := newTestService(t, store)

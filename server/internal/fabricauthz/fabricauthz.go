@@ -2,7 +2,7 @@
 // aiprovider response ajanı, coordinator kaos motoru) KANONİK yetki kapılarını
 // mevcut ve CANLI `scope.Engine`'e bağlayan üretim adaptörlerini sağlar.
 //
-// Remediation (C1/H1/L2), bu düzlemlerin yetkilendiricilerini ENJEKTE edilebilir
+// Önceki sertleştirme, bu düzlemlerin yetkilendiricilerini ENJEKTE edilebilir
 // bıraktı ve nil => fail-closed (hard-deny) yaptı. Bu paket o sözleşmenin eksik
 // ÜRETİM kolu: kapıyı GEVŞETMEZ, zaten var olan tek otoriteye (scope/ROE motoru)
 // bağlar — böylece dormant düzlemler "izin-veren" değil "etkinleştirilebilir" olur.
@@ -111,7 +111,7 @@ var responseActionToScope = map[aiprovider.ResponseActionType]scope.Action{
 }
 
 // ResponseAuthorizer, aiprovider.ActionAuthorizer'ı scope.Engine üzerinden karşılar.
-// C1'in çift-kontrol/tenant kapısının ÜSTÜNE eklenen scope/ROE kapısıdır.
+// Mevcut çift-kontrol/tenant kapısının ÜSTÜNE eklenen scope/ROE kapısıdır.
 type ResponseAuthorizer struct {
 	eng *scope.Engine
 }

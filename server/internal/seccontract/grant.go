@@ -46,7 +46,7 @@ func NewGrant(grantID, nonce string, req ActionRequest, policyHash, policyVersio
 	}
 }
 
-// checkBinding, CAS predicate'inin salt-okunur (mutasyonsuz) kısmıdır (H12/INV-047):
+// checkBinding, CAS predicate'inin salt-okunur (mutasyonsuz) kısmıdır (INV-047):
 // state hariç tüm bağların istek+etkin politikayla eşleşmesi. Uymazsa spesifik hata.
 func (g AuthorizationGrant) checkBinding(req ActionRequest, effectivePolicyHash string, now time.Time) error {
 	if !now.Before(g.ExpiresAt) {
@@ -84,7 +84,7 @@ func ReasonFor(err error) ReasonCode {
 	}
 }
 
-// ReplayStore, grant'in TEK-KULLANIM tüketimini yönetir (CONTRACTS §3, B2/INV-003).
+// ReplayStore, grant'in TEK-KULLANIM tüketimini yönetir (CONTRACTS §3, INV-003).
 type ReplayStore interface {
 	// Consume, grant'i ISSUED→CONSUMED'e ATOMİK compare-and-swap ile geçirir; YALNIZ
 	// checkBinding predicate'i sağlanırsa (INV-047, tek commit-point). Aynı grant'e

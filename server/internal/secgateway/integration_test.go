@@ -39,7 +39,7 @@ func actionReq(pt seccontract.PrincipalType, act scope.Action) seccontract.Actio
 }
 
 // TestGatewayToExecutor_HappyPath, tam zinciri doğrular ve envelope invariant'larını
-// kontrol eder: CommandID dolu; envelope GrantID TAŞIMAZ (opak correlation, H2);
+// kontrol eder: CommandID dolu; envelope GrantID TAŞIMAZ (opak correlation);
 // ExecutionIntent oluşur (INV-046).
 func TestGatewayToExecutor_HappyPath(t *testing.T) {
 	gw, exec, store := harness()
