@@ -33,21 +33,23 @@ go run ./server/cmd/kutctl migrate status    # her migrasyonun durumunu listeler
 
 `schema.sql` ile kurulmuş bir veritabanı veri değişikliği olmadan geçirilir:
 
-1. Önce `migrate up` çalıştırın. Her durumda güvenlidir: baseline'ın her ifadesi idempotenttir
-   (`IF NOT EXISTS`, korumalı `DO` blokları) ve eksik parçaları tamamlar. Politika ve trigger'ları
-   yeniden oluşturduğu için kısa süreli tablo kilidi alır; kilit beklemesi `KUT_MIGRATE_LOCK_TIMEOUT`
-   (varsayılan `30s`) ile sınırlıdır. `event_logs` bölümleri farklı adlarla yönetiliyorsa çakışabilir.
-   ```bash
-   go run ./server/cmd/kutctl migrate up
-   ```
-2. Canlı sistemde baseline'ı yeniden çalıştırmak istemiyorsanız, baseline'ın oluşturduğu her nesne
-   zaten varsa onu uygulanmış olarak işaretleyin; hiçbir şey çalıştırılmaz:
-   ```bash
-   go run ./server/cmd/kutctl migrate baseline
-   go run ./server/cmd/kutctl migrate up        # yalnız sonraki migrasyonları uygular
-   ```
-   `baseline`, baseline'ın oluşturduğu herhangi bir nesne (tablo, RLS ayarı, politika, trigger,
-   enum, sütun, rol) eksikse reddeder ve eksikleri listeler; bu durumda `migrate up` çalıştırın.
+İki yol vardır; ikisi birbirinin alternatifidir, art arda çalıştırılmaz (`up`'tan sonra baseline zaten uygulanmış olur ve `baseline`'ın yapacak işi kalmaz).
+
+- **`migrate up` (varsayılan).** Her durumda güvenlidir: baseline'ın her ifadesi idempotenttir
+  (`IF NOT EXISTS`, korumalı `DO` blokları) ve eksik nesneleri tamamlar. Politika ve trigger'ları
+  yeniden oluşturduğu için ACCESS EXCLUSIVE tablo kilidi alır; kilit beklemesi
+  `KUT_MIGRATE_LOCK_TIMEOUT` (varsayılan `30s`) ile sınırlıdır.
+  ```bash
+  go run ./server/cmd/kutctl migrate up
+  ```
+- **`migrate baseline`.** Yalnızca veritabanı zaten baseline'ın son biçimindeyse kullanılır: baseline'ı
+  uygulanmış olarak işaretler, tablo kilidi almaz ve saklama işinin sildiği `event_logs` bölümlerini
+  yeniden oluşturmaz. Baseline'ın oluşturduğu herhangi bir nesne (tablo, RLS ayarı, politika, trigger,
+  enum, sütun, rol) eksikse reddeder ve eksikleri listeler; bu durumda `migrate up` çalıştırın.
+  ```bash
+  go run ./server/cmd/kutctl migrate baseline
+  go run ./server/cmd/kutctl migrate up        # yalnız sonraki migrasyonları uygular
+  ```
 
 ## Roller
 
@@ -127,23 +129,24 @@ go run ./server/cmd/kutctl migrate status    # list each migration and its state
 
 A database created from `schema.sql` moves to migrations without any data change:
 
-1. Run `migrate up` first. It is safe in every state: each statement in the baseline is idempotent
-   (`IF NOT EXISTS`, guarded `DO` blocks) and fills in whatever is missing. It recreates policies
-   and triggers, which takes a brief table lock; the wait for a lock is capped by
-   `KUT_MIGRATE_LOCK_TIMEOUT` (default `30s`). It can collide if `event_logs` partitions are
-   managed under different names.
-   ```bash
-   go run ./server/cmd/kutctl migrate up
-   ```
-2. To avoid re-running the baseline on a live system, record it as applied when every object it
-   creates already exists; nothing is executed:
-   ```bash
-   go run ./server/cmd/kutctl migrate baseline
-   go run ./server/cmd/kutctl migrate up        # applies only the later migrations
-   ```
-   `baseline` refuses a database missing any object the baseline creates (tables, row-level
-   security settings, policies, triggers, enums, columns, the `kut_admin` role) and lists what is
-   missing; run `migrate up` in that case.
+There are two options. They are alternatives, not consecutive steps: after `up` the baseline has already run, so `baseline` has nothing left to do.
+
+- **`migrate up` (default).** Safe in every state: each statement in the baseline is idempotent
+  (`IF NOT EXISTS`, guarded `DO` blocks) and fills in whatever is missing. It recreates policies
+  and triggers, which takes ACCESS EXCLUSIVE table locks; the wait for a lock is capped by
+  `KUT_MIGRATE_LOCK_TIMEOUT` (default `30s`).
+  ```bash
+  go run ./server/cmd/kutctl migrate up
+  ```
+- **`migrate baseline`.** Use it only when the database is already in the baseline's final shape: it
+  records the baseline as applied, takes no table locks and does not recreate `event_logs` partitions
+  that retention dropped. It refuses a database missing any object the baseline creates (tables,
+  row-level security settings, policies, triggers, enums, columns, the `kut_admin` role) and lists
+  what is missing; run `migrate up` in that case.
+  ```bash
+  go run ./server/cmd/kutctl migrate baseline
+  go run ./server/cmd/kutctl migrate up        # applies only the later migrations
+  ```
 
 ## Roles
 
