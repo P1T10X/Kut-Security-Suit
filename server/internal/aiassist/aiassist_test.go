@@ -270,7 +270,7 @@ func TestAssistantFlow(t *testing.T) {
 		t.Error("onay öncesi uygulanabilir olmamalı")
 	}
 	// İnsan onayı sonrası.
-	if err := d.Approve("cihanuralkaya"); err != nil {
+	if err := d.Approve("analyst"); err != nil {
 		t.Fatalf("onay hatası: %v", err)
 	}
 	if !d.Actionable() {
