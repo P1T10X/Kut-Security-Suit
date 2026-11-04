@@ -1,22 +1,22 @@
 -- +goose Up
 -- =============================================================================
--- KUT Security Suite — PostgreSQL Şeması (düzeltilmiş)
+-- KUT Security Suite — PostgreSQL Şeması
 -- =============================================================================
 -- Sürümlü yol: db/postgres/migrations/00001_baseline.sql bu dosyanın goose notasyonlu
 -- eşdeğeridir (aynı ifadeler); yeni şema değişiklikleri yalnız migrasyon olarak eklenir.
 -- =============================================================================
--- İnceleme bulgularına göre orijinal taslaktan farklar:
---   #1  Eksik `policies` tablosu eklendi; kırık FK düzeltildi.
---   #1  event_logs artık ZAMAN-BAZLI PARTITIONING kullanır ve sorgulanabilir
---       kalması için mesaj/detay alanları düz metin/JSONB'dir. Gizlilik
---       AT-REST şifreleme (TDE / şifreli disk / pgcrypto ile SEÇİLİ alanlar)
---       ile sağlanır — her logu BYTEA'ya şifreleyip aranamaz hale getirmek yerine.
---   #2  Blind index'ler düz SHA-256 değil, HMAC (keyed) üretilmelidir.
---       Uygulama katmanı, sunucudaki gizli anahtarla HMAC-SHA256 hesaplar.
---   #6  enrollment_tokens, agent_certificates tabloları (PKI bootstrap).
---   #4  ota_releases: imza alanı (yalnız hash değil).
---   #10 admins (RBAC) + audit_log (yönetici aksiyon denetim izi).
---   common: device_status'a PENDING_ENROLLMENT eklendi.
+-- Tasarım özeti:
+--   * `policies` tablosu tanımlıdır; politika kuralları ve atamaları ona FK ile bağlanır.
+--   * event_logs ZAMAN-BAZLI PARTITIONING kullanır ve sorgulanabilir
+--     kalması için mesaj/detay alanları düz metin/JSONB'dir. Gizlilik
+--     AT-REST şifreleme (TDE / şifreli disk / pgcrypto ile SEÇİLİ alanlar)
+--     ile sağlanır — her logu BYTEA'ya şifreleyip aranamaz hale getirmek yerine.
+--   * Blind index'ler düz SHA-256 değil, HMAC (keyed) üretilir.
+--     Uygulama katmanı, sunucudaki gizli anahtarla HMAC-SHA256 hesaplar.
+--   * enrollment_tokens, agent_certificates tabloları (PKI bootstrap).
+--   * ota_releases: imza alanı (yalnız hash değil).
+--   * admins (RBAC) + audit_log (yönetici aksiyon denetim izi).
+--   * device_status'ta PENDING_ENROLLMENT durumu vardır.
 --
 -- NOT (gizlilik): Bu şema, gerçekten hassas serbest-metin alanlarını (hostname,
 -- mac, os_info) pgcrypto ile ŞİFRELİ (BYTEA) saklar ve arama için AYRI bir HMAC
@@ -91,7 +91,7 @@ $$;
 -- ---------------------------------------------------------------------------
 -- CİHAZLAR
 --   * Hassas serbest-metin alanları pgcrypto ile şifreli (BYTEA).
---   * *_bidx sütunları HMAC(keyed) blind index'tir — düz SHA-256 DEĞİL (#2).
+--   * *_bidx sütunları HMAC(keyed) blind index'tir — düz SHA-256 DEĞİL.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS devices (
     id                     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -100,11 +100,11 @@ CREATE TABLE IF NOT EXISTS devices (
     os_info_encrypted      BYTEA,
     -- HMAC-SHA256(sunucu_gizli_anahtarı, normalize_edilmiş_mac). MAC uzayı ~48 bit
     -- olduğundan DÜZ hash offline brute-force'a açıktır; keyed HMAC şarttır.
-    mac_address_bidx       BYTEA NOT NULL,            -- tekillik KİRACI BAŞINA: bkz. uq_devices_tenant_mac (Kiracı Duvarı II)
+    mac_address_bidx       BYTEA NOT NULL,            -- tekillik KİRACI BAŞINA: bkz. uq_devices_tenant_mac
     agent_version          VARCHAR(50),
     os_platform            VARCHAR(20),               -- "windows" | "linux"
     os_version             VARCHAR(120),              -- okunabilir OS sürümü (filo envanteri)
-    agent_binary_hash      CHAR(64),                  -- ajan ikilisinin SHA-256'sı (öz-tasdik, #4)
+    agent_binary_hash      CHAR(64),                  -- ajan ikilisinin SHA-256'sı (öz-tasdik)
     agent_binary_version   VARCHAR(50),               -- yukarıdaki hash'in ait olduğu sürüm (kurcalama teşhisi)
     status                 device_status NOT NULL DEFAULT 'PENDING_ENROLLMENT',
     tenant_id              VARCHAR(63) NOT NULL DEFAULT '',  -- çok-tenant: cihazın kiracısı (enrollment token'dan bağlanır; boş = tek-tenant)
@@ -118,7 +118,7 @@ CREATE INDEX IF NOT EXISTS idx_devices_status    ON devices (status);
 CREATE INDEX IF NOT EXISTS idx_devices_last_seen ON devices (last_seen);
 
 -- ---------------------------------------------------------------------------
--- PKI / ENROLLMENT (#6 bootstrap)
+-- PKI / ENROLLMENT (bootstrap)
 -- ---------------------------------------------------------------------------
 -- Tek kullanımlık, süreli kayıt token'ları. token_hash = HMAC(token) saklanır,
 -- ham token asla DB'de tutulmaz.
@@ -152,7 +152,7 @@ CREATE INDEX IF NOT EXISTS idx_agent_certs_active ON agent_certificates (device_
     WHERE revoked_at IS NULL;
 
 -- ---------------------------------------------------------------------------
--- POLİTİKALAR (#1 — eksik tablo eklendi)
+-- POLİTİKALAR
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS policies (
     id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -185,7 +185,7 @@ CREATE TABLE IF NOT EXISTS device_policies (
 );
 
 -- ---------------------------------------------------------------------------
--- OTA SÜRÜMLERİ (#4 — imza, yalnız hash değil)
+-- OTA SÜRÜMLERİ (imza, yalnız hash değil)
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS ota_releases (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -200,7 +200,7 @@ CREATE TABLE IF NOT EXISTS ota_releases (
 );
 
 -- ---------------------------------------------------------------------------
--- OLAY LOGLARI (#1 — partitioned, sorgulanabilir)
+-- OLAY LOGLARI (partitioned, sorgulanabilir)
 --   Gizlilik at-rest şifreleme ile; içerik JSONB olarak sorgulanabilir kalır.
 --   PostgreSQL 12+ native RANGE partitioning (created_at üzerinde).
 -- ---------------------------------------------------------------------------
@@ -226,7 +226,7 @@ CREATE INDEX IF NOT EXISTS idx_event_logs_severity ON event_logs (severity, crea
 CREATE INDEX IF NOT EXISTS idx_event_logs_details  ON event_logs USING GIN (details);
 
 -- Örnek başlangıç partition'ları. Üretimde pg_partman veya cron ile otomatik
--- oluşturulmalı ve saklama süresi (KVKK #11) ile eski partition'lar DROP edilmeli.
+-- oluşturulmalı ve KVKK saklama süresi ile eski partition'lar DROP edilmeli.
 CREATE TABLE IF NOT EXISTS event_logs_2026_08 PARTITION OF event_logs
     FOR VALUES FROM ('2026-08-01') TO ('2026-09-01');
 CREATE TABLE IF NOT EXISTS event_logs_2026_09 PARTITION OF event_logs
@@ -240,7 +240,7 @@ CREATE TABLE IF NOT EXISTS event_logs_2026_09 PARTITION OF event_logs
 -- device_id gibi uygulama katmanında doğrulanır). Kim işaretledi bilgisi
 -- denetim iziyle (WriteAudit) sağlam tutulur; buradaki admin_id yalnız görüntü.
 -- status nullable: bir olay yalnız atanabilir/notlanabilir (henüz ack'lenmeden) —
--- vaka yönetimi (#9). assignee: sorumlu analist; note: serbest triyaj notu.
+-- vaka yönetimi. assignee: sorumlu analist; note: serbest triyaj notu.
 CREATE TABLE IF NOT EXISTS event_ack (
     event_id   TEXT PRIMARY KEY,
     tenant_id  TEXT NOT NULL DEFAULT 'default', -- KİRACI kapsamı (çok-kiracılı izolasyon)
@@ -258,7 +258,7 @@ CREATE INDEX IF NOT EXISTS idx_event_ack_tenant ON event_ack (tenant_id);
 CREATE TABLE IF NOT EXISTS discovered_hosts (
     id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     reporter_device  UUID REFERENCES devices(id) ON DELETE SET NULL,
-    mac_bidx         BYTEA NOT NULL,          -- HMAC blind index (#2)
+    mac_bidx         BYTEA NOT NULL,          -- HMAC blind index
     mac_encrypted    BYTEA NOT NULL,
     ip_encrypted     BYTEA,
     vendor           VARCHAR(120),            -- OUI'den türetilmiş üretici (hassas değil)
@@ -415,7 +415,7 @@ CREATE TABLE IF NOT EXISTS msp_customers (
 CREATE INDEX IF NOT EXISTS idx_msp_customers_tenant ON msp_customers (tenant_id);
 
 -- ---------------------------------------------------------------------------
--- YÖNETİCİLER (RBAC) + DENETİM İZİ (#10)
+-- YÖNETİCİLER (RBAC) + DENETİM İZİ
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS admins (
     id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -470,7 +470,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
     target_id   UUID,
     metadata    JSONB,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-    -- Kurcalama-kanıtı hash zinciri (SEC C-1): entry_hash =
+    -- Kurcalama-kanıtı hash zinciri: entry_hash =
     -- SHA-256(prev_hash || kanonik(alanlar)). Bir kaydın değiştirilmesi/silinmesi
     -- sonraki hash'leri geçersiz kılar. VerifyAuditChain ile doğrulanır.
     prev_hash   BYTEA,
@@ -478,7 +478,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 CREATE INDEX IF NOT EXISTS idx_audit_admin  ON audit_log (admin_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_target ON audit_log (target_type, target_id);
--- Mevcut kurulum için migrasyon (H2): tenant_id sütunu tenant-öncesi sürümlerde
+-- Mevcut kurulum için migrasyon: tenant_id sütunu tenant-öncesi sürümlerde
 -- YOKTU; eklenmezse WriteAudit/VerifyAuditChain sorguları (SELECT ... tenant_id)
 -- hata verir ve denetim yazımı fail-closed durur. DEFAULT '' ile eklenir;
 -- AuditChainHash boş tenant_id'yi tenant-öncesi biçimle hash'lediğinden (bkz.
@@ -532,8 +532,8 @@ CREATE INDEX IF NOT EXISTS idx_saved_searches_created ON saved_searches (created
 -- =============================================================================
 -- TENANT İZOLASYONU (ROW-LEVEL SECURITY)
 -- =============================================================================
--- Bu bölüm, "SEC-003: Row-Level Security (RLS) politikaları" implementasyonunu
--- içerir. Tüm tenant (kiracı) farkındalığı olan tablolarda RLS etkinleştirilerek
+-- Bu bölüm Row-Level Security (RLS) politikalarını içerir. Tüm tenant (kiracı)
+-- farkındalığı olan tablolarda RLS etkinleştirilerek
 -- uygulama katmanındaki "WHERE tenant_id = ?" atlama hatalarına karşı derinlemesine
 -- savunma (defense-in-depth) sağlanır.
 -- 
@@ -652,7 +652,7 @@ CREATE POLICY superuser_bypass_incidents ON incidents
     TO kut_admin
     USING (true);
 
--- Güvenlik (SEC-012): evidence_custody tablosu için değiştirilemezlik (immutability) kuralları.
+-- Güvenlik: evidence_custody tablosu için değiştirilemezlik (immutability) kuralları.
 -- Adli bilişim delillerinin bütünlüğünü korumak için, kayıtların silinmesi veya güncellenmesi 
 -- veritabanı seviyesinde engellenmiştir (append-only).
 -- Bakım gerektiğinde geçici olarak tetikleyiciler devre dışı bırakılabilir:
@@ -678,7 +678,7 @@ CREATE OR REPLACE TRIGGER trg_custody_no_delete
     BEFORE DELETE ON evidence_custody
     FOR EACH ROW EXECUTE FUNCTION prevent_custody_mutation();
 
--- Güvenlik (SEC-012): audit_log tablosu için değiştirilemezlik (immutability) kuralları.
+-- Güvenlik: audit_log tablosu için değiştirilemezlik (immutability) kuralları.
 -- Denetim izlerinin güvenilirliği için, bu tabloya sadece ekleme yapılabilir (append-only).
 -- Bakım: ALTER TABLE audit_log DISABLE TRIGGER ALL;
 -- ...
@@ -703,7 +703,7 @@ CREATE OR REPLACE TRIGGER trg_audit_log_no_delete
     FOR EACH ROW EXECUTE FUNCTION prevent_audit_log_mutation();
 
 -- =============================================================================
--- Kiracı Duvarı II YÜKSELTME BLOĞU (idempotent, yeniden çalıştırılabilir)
+-- Kiracı başına MAC tekilliği YÜKSELTME BLOĞU (idempotent, yeniden çalıştırılabilir)
 -- =============================================================================
 -- Taze kurulumda yukarıdaki CREATE TABLE'lar zaten son biçimdedir ve bu blok
 -- no-op'tur. Dosyanın tamamı da yeniden çalıştırılabilirdir (her ifade idempotent);
@@ -728,7 +728,7 @@ CREATE INDEX IF NOT EXISTS idx_policies_tenant ON policies (tenant_id);
 -- END TENANT-MAC-UPGRADE
 
 -- =============================================================================
--- Kiracı Duvarı III YÜKSELTME BLOĞU (idempotent, yeniden çalıştırılabilir)
+-- Ingest token kiracı bağı YÜKSELTME BLOĞU (idempotent, yeniden çalıştırılabilir)
 -- =============================================================================
 -- Taze kurulumda yukarıdaki CREATE TABLE son biçimdedir ve bu blok no-op'tur.
 -- MEVCUT kurulumlarda yalnız BEGIN/END arasını uygulayın:
