@@ -48,7 +48,7 @@ go run ./server/cmd/kutctl migrate status    # her migrasyonun durumunu listeler
   baseline'ın açıkça `ADD COLUMN IF NOT EXISTS` ile eklediği sütunlar tamamlanır. Baseline'dan çok
   eski bir şema bu yüzden `up` ile tam yükseltilmez. Aralığı baseline'ın `event_logs` bölümleriyle
   çakışan ama adı farklı bir bölüm varsa `up` hata verir ve işlemi geri alır; veri değişmez, ama
-  önce çakışan bölüm giderilmelidir. Politika ve trigger'ları
+  önce çakışan bölüm giderilmelidir. Ayrıca `devices_mac_address_bidx_key` kısıtını siler (`DROP CONSTRAINT`). Politika ve trigger'ları
   yeniden oluşturduğu için ACCESS EXCLUSIVE tablo kilidi alır; kilit beklemesi
   `KUT_MIGRATE_LOCK_TIMEOUT` (varsayılan `30s`) ile sınırlıdır.
   ```bash
@@ -156,7 +156,7 @@ There are two options. They are alternatives, not consecutive steps: after `up` 
   baseline adds with an explicit `ADD COLUMN IF NOT EXISTS` are filled in. A schema much older than
   the baseline is therefore not fully upgraded by `up`. If a differently named `event_logs`
   partition overlaps the range of a baseline partition, `up` fails and rolls back; nothing is
-  changed, but the overlapping partition has to be resolved first. It recreates policies
+  changed, but the overlapping partition has to be resolved first. It also drops the `devices_mac_address_bidx_key` constraint (`DROP CONSTRAINT`). It recreates policies
   and triggers, which takes ACCESS EXCLUSIVE table locks; the wait for a lock is capped by
   `KUT_MIGRATE_LOCK_TIMEOUT` (default `30s`).
   ```bash
