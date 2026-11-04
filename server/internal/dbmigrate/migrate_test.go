@@ -66,6 +66,14 @@ func TestSchemaFileMatchesBaselineMigration(t *testing.T) {
 	}
 }
 
+// Statement patterns tolerate leading whitespace (statements inside DO blocks), letter case, an
+// optional IF NOT EXISTS, a schema prefix and quoted identifiers. Each ident captures the bare name.
+const (
+	sqlStart    = `(?mi)^[ \t]*`
+	ifNotExists = `(?:IF NOT EXISTS\s+)?`
+	ident       = `(?:"?\w+"?\.)?"?(\w+)"?`
+)
+
 func probeSet(kind string) map[string]bool {
 	out := map[string]bool{}
 	for _, c := range baselineProbe() {
@@ -114,16 +122,25 @@ func TestBaselineProbeListCoversBaselineStatements(t *testing.T) {
 	sql := upSection(t, "00001_baseline.sql")
 
 	// Partition children ("... PARTITION OF ...") are not followed by a column list.
-	sameSet(t, "table", statementNames(t, sql, `(?m)^CREATE TABLE IF NOT EXISTS (\w+)\s*\(`, 1), probeSet("table"))
+	sameSet(t, "table", statementNames(t, sql, sqlStart+`CREATE TABLE `+ifNotExists+ident+`\s*\(`, 1), probeSet("table"))
 	sameSet(t, "row-level security table",
-		statementNames(t, sql, `(?m)^ALTER TABLE (\w+) FORCE ROW LEVEL SECURITY`, 1), probeSet("rls"))
-	sameSet(t, "policy", statementNames(t, sql, `(?m)^CREATE POLICY (\w+) ON (\w+)`, 2, 1), probeSet("policy"))
+		statementNames(t, sql, sqlStart+`ALTER TABLE `+ident+`\s+FORCE ROW LEVEL SECURITY`, 1), probeSet("rls"))
+	sameSet(t, "policy", statementNames(t, sql, sqlStart+`CREATE POLICY `+ident+`\s+ON `+ident, 2, 1), probeSet("policy"))
 	sameSet(t, "trigger",
-		statementNames(t, sql, `(?s)(?m)^CREATE (?:OR REPLACE )?TRIGGER (\w+)\s.*?\sON (\w+)`, 2, 1), probeSet("trigger"))
-	sameSet(t, "enum type", statementNames(t, sql, `CREATE TYPE (\w+) AS ENUM`, 1), probeSet("type"))
+		statementNames(t, sql, `(?s)`+sqlStart+`CREATE (?:OR REPLACE )?(?:CONSTRAINT )?TRIGGER `+ident+`\s.*?\sON `+ident, 2, 1),
+		probeSet("trigger"))
+	sameSet(t, "enum type", statementNames(t, sql, sqlStart+`CREATE TYPE `+ident+`\s+AS ENUM`, 1), probeSet("type"))
 	sameSet(t, "added column",
-		statementNames(t, sql, `(?m)^ALTER TABLE (\w+) ADD COLUMN IF NOT EXISTS (\w+)`, 1, 2), probeSet("column"))
-	sameSet(t, "role", statementNames(t, sql, `CREATE ROLE (\w+)`, 1), probeSet("role"))
+		statementNames(t, sql, sqlStart+`ALTER TABLE (?:ONLY )?(?:IF EXISTS )?`+ident+`\s+ADD COLUMN `+ifNotExists+ident, 1, 2),
+		probeSet("column"))
+	sameSet(t, "role", statementNames(t, sql, sqlStart+`CREATE ROLE `+ident, 1), probeSet("role"))
+	// Every probed index must be created by the baseline.
+	created := statementNames(t, sql, sqlStart+`CREATE (?:UNIQUE )?INDEX `+ifNotExists+ident+`\s+ON`, 1)
+	for _, i := range baselineIndexes {
+		if !created[i] {
+			t.Errorf("probe checks index %q but the baseline does not create it", i)
+		}
+	}
 
 	// Enum labels: every quoted label of the checked enums appears in the probe.
 	for typ, vals := range baselineEnums {
@@ -143,12 +160,6 @@ func TestBaselineProbeListCoversBaselineStatements(t *testing.T) {
 			want[typ+"."+v] = true
 		}
 		sameSet(t, "enum label", got, want)
-	}
-	// Every index created by the baseline need not be probed, but every probed one must exist.
-	for _, i := range baselineIndexes {
-		if !regexp.MustCompile(`(?m)^CREATE (?:UNIQUE )?INDEX IF NOT EXISTS ` + i + `\b`).MatchString(sql) {
-			t.Errorf("probe checks index %q but the baseline does not create it", i)
-		}
 	}
 }
 
