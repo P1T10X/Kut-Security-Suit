@@ -344,3 +344,19 @@ func TestPGOpenAppliesLockTimeout(t *testing.T) {
 		t.Fatalf("lock_timeout = %q err=%v, want 7s", got, err)
 	}
 }
+
+// CurrentRole reports the role the connection really uses.
+func TestPGCurrentRole(t *testing.T) {
+	db, ctx := scratchDB(t)
+	var want string
+	if err := db.QueryRowContext(ctx, "SELECT current_user").Scan(&want); err != nil {
+		t.Fatal(err)
+	}
+	got, err := CurrentRole(ctx, os.Getenv("KUT_DATABASE_URL"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got == "" || got != want {
+		t.Fatalf("CurrentRole = %q, want %q", got, want)
+	}
+}

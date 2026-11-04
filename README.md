@@ -117,7 +117,8 @@ Tüm ayarlar ortam değişkenleriyle yapılır. Tam liste + açıklama:
 
 - **Zorunlu (sunucu):** `KUT_MASTER_KEY` (32 bayt base64), TLS yolları
   (`KUT_CA_CERT`/`KUT_CA_KEY`/`KUT_SERVER_CERT`/`KUT_SERVER_KEY`); üretim için
-  `KUT_DATABASE_URL` (boşsa `KUT_DEMO=1` ile bellek-içi demo).
+  `KUT_DATABASE_URL` (boşsa `KUT_DEMO=1` ile bellek-içi demo); açılışta migrasyon için
+  `KUT_MIGRATE_ON_START=1` ve şema sahibi bağlantısı `KUT_MIGRATE_DATABASE_URL(_FILE)`.
 - **Opsiyonel korumalar (sunucu):** `KUT_ALERT_WEBHOOK_URL`/`KUT_ALERT_FORMAT`
   (SOC uyarı, Slack/Teams), `KUT_AUTO_RESPONSE` (SOAR oto-karantina), `KUT_IOC_FILE`
   (tehdit istihbaratı), `KUT_DETECT_RULES_FILE` (özel tespit kuralları),
@@ -265,7 +266,8 @@ All settings are via environment variables. Full list + descriptions:
 
 - **Required (server):** `KUT_MASTER_KEY` (32-byte base64), TLS paths
   (`KUT_CA_CERT`/`KUT_CA_KEY`/`KUT_SERVER_CERT`/`KUT_SERVER_KEY`); for production
-  `KUT_DATABASE_URL` (if empty, in-memory demo with `KUT_DEMO=1`).
+  `KUT_DATABASE_URL` (if empty, in-memory demo with `KUT_DEMO=1`); to migrate at start, set
+  `KUT_MIGRATE_ON_START=1` and the owner connection `KUT_MIGRATE_DATABASE_URL(_FILE)`.
 - **Optional protections (server):** `KUT_ALERT_WEBHOOK_URL`/`KUT_ALERT_FORMAT`
   (SOC alerting, Slack/Teams), `KUT_AUTO_RESPONSE` (SOAR auto-quarantine),
   `KUT_IOC_FILE` (threat intel), `KUT_DETECT_RULES_FILE` (custom detection rules),

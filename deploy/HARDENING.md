@@ -59,6 +59,8 @@ BİLİNÇLİ olarak açık bırakılır. Gerekçeler birim dosyasında satır-sa
   (env öncelikli; yoksa dosya okunur, içerik kırpılır). systemd `LoadCredential=`,
   Docker/K8s secrets ve Vault agent bu dosyaları sağlar — böylece sır
   `/proc/<pid>/environ` veya `ps` üzerinden sızmaz.
+  Açılışta migrasyon (`KUT_MIGRATE_ON_START=1`) için şema sahibi bağlantısı da aynı şekilde
+  `KUT_MIGRATE_DATABASE_URL_FILE` ile verilmelidir; uygulama bağlantısından ayrıdır.
   Örnek (systemd): `LoadCredential=mk:/etc/kut/master.key` +
   `Environment=KUT_MASTER_KEY_FILE=%d/mk`.
 - CA özel anahtarı ve imzalama anahtarları da benzer şekilde bir KMS/Vault'ta
