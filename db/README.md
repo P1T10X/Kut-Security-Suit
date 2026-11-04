@@ -33,18 +33,23 @@ go run ./server/cmd/kutctl migrate status    # her migrasyonun durumunu listeler
 
 `schema.sql` ile kurulmuş bir veritabanı veri değişikliği olmadan geçirilir:
 
-1. Güncel şemadaysa (kiracı sütunları ve `uq_devices_tenant_mac` var), baseline'ı uygulanmış
-   olarak işaretleyin; hiçbir şey çalıştırılmaz:
-   ```bash
-   go run ./server/cmd/kutctl migrate baseline
-   go run ./server/cmd/kutctl migrate up        # yalnız sonraki migrasyonları uygular
-   ```
-   Şema baseline'ın son biçiminde değilse `baseline` komutu reddeder.
-2. Daha eski bir şemadaysa doğrudan `migrate up` çalıştırın: baseline'ın her ifadesi
-   idempotenttir (`IF NOT EXISTS`, korumalı `DO` blokları) ve eksik parçaları tamamlar.
-   Canlı sistemlerde 1. yol tercih edilir; 2. yol politika/trigger'ları yeniden oluşturduğu
-   için kısa süreli tablo kilidi alır ve `event_logs` bölümleri farklı adlarla yönetiliyorsa
-   çakışabilir.
+İki yol vardır; ikisi birbirinin alternatifidir, art arda çalıştırılmaz (`up`'tan sonra baseline zaten uygulanmış olur ve `baseline`'ın yapacak işi kalmaz).
+
+- **`migrate up` (varsayılan).** Her durumda güvenlidir: baseline'ın her ifadesi idempotenttir
+  (`IF NOT EXISTS`, korumalı `DO` blokları) ve eksik nesneleri tamamlar. Politika ve trigger'ları
+  yeniden oluşturduğu için ACCESS EXCLUSIVE tablo kilidi alır; kilit beklemesi
+  `KUT_MIGRATE_LOCK_TIMEOUT` (varsayılan `30s`) ile sınırlıdır.
+  ```bash
+  go run ./server/cmd/kutctl migrate up
+  ```
+- **`migrate baseline`.** Yalnızca veritabanı zaten baseline'ın son biçimindeyse kullanılır: baseline'ı
+  uygulanmış olarak işaretler, tablo kilidi almaz ve saklama işinin sildiği `event_logs` bölümlerini
+  yeniden oluşturmaz. Baseline'ın oluşturduğu herhangi bir nesne (tablo, RLS ayarı, politika, trigger,
+  enum, sütun, rol) eksikse reddeder ve eksikleri listeler; bu durumda `migrate up` çalıştırın.
+  ```bash
+  go run ./server/cmd/kutctl migrate baseline
+  go run ./server/cmd/kutctl migrate up        # yalnız sonraki migrasyonları uygular
+  ```
 
 ## Roller
 
@@ -124,17 +129,24 @@ go run ./server/cmd/kutctl migrate status    # list each migration and its state
 
 A database created from `schema.sql` moves to migrations without any data change:
 
-1. If it is on the current schema (tenant columns and `uq_devices_tenant_mac` exist), record
-   the baseline as applied; nothing is executed:
-   ```bash
-   go run ./server/cmd/kutctl migrate baseline
-   go run ./server/cmd/kutctl migrate up        # applies only the later migrations
-   ```
-   `baseline` refuses a database that is not in the baseline's final shape.
-2. If it is on an older schema, run `migrate up` directly: every statement in the baseline is
-   idempotent (`IF NOT EXISTS`, guarded `DO` blocks) and fills in whatever is missing. On a live
-   system prefer path 1; path 2 recreates policies and triggers (a brief table lock) and can
-   collide if `event_logs` partitions are managed under different names.
+There are two options. They are alternatives, not consecutive steps: after `up` the baseline has already run, so `baseline` has nothing left to do.
+
+- **`migrate up` (default).** Safe in every state: each statement in the baseline is idempotent
+  (`IF NOT EXISTS`, guarded `DO` blocks) and fills in whatever is missing. It recreates policies
+  and triggers, which takes ACCESS EXCLUSIVE table locks; the wait for a lock is capped by
+  `KUT_MIGRATE_LOCK_TIMEOUT` (default `30s`).
+  ```bash
+  go run ./server/cmd/kutctl migrate up
+  ```
+- **`migrate baseline`.** Use it only when the database is already in the baseline's final shape: it
+  records the baseline as applied, takes no table locks and does not recreate `event_logs` partitions
+  that retention dropped. It refuses a database missing any object the baseline creates (tables,
+  row-level security settings, policies, triggers, enums, columns, the `kut_admin` role) and lists
+  what is missing; run `migrate up` in that case.
+  ```bash
+  go run ./server/cmd/kutctl migrate baseline
+  go run ./server/cmd/kutctl migrate up        # applies only the later migrations
+  ```
 
 ## Roles
 
