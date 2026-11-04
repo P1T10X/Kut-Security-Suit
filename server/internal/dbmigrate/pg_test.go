@@ -249,7 +249,7 @@ func TestPGApplicationRole(t *testing.T) {
 }
 
 // A database that lacks any one object the baseline creates is refused, and nothing is recorded.
-func TestBaselineRefusesDatabaseMissingAnyBaselineObject(t *testing.T) {
+func TestPGBaselineRefusesDatabaseMissingAnyBaselineObject(t *testing.T) {
 	for _, c := range []struct{ name, ddl, missing string }{
 		{"policy", `DROP POLICY superuser_bypass_cases ON cases`, "policy superuser_bypass_cases on cases"},
 		{"trigger", `DROP TRIGGER trg_audit_log_no_delete ON audit_log`, "trigger trg_audit_log_no_delete on audit_log"},
@@ -282,7 +282,7 @@ func TestBaselineRefusesDatabaseMissingAnyBaselineObject(t *testing.T) {
 }
 
 // Stamping waits while another runner holds the migration lock and proceeds once it is released.
-func TestBaselineWaitsForMigrationLock(t *testing.T) {
+func TestPGBaselineWaitsForMigrationLock(t *testing.T) {
 	db, ctx := scratchDB(t)
 	loadSchemaFile(t, ctx, db)
 	if _, err := Status(ctx, db); err != nil { // creates the version table
@@ -327,7 +327,8 @@ func TestBaselineWaitsForMigrationLock(t *testing.T) {
 }
 
 // Connections opened by Open carry the lock timeout, and the override is honoured.
-func TestOpenAppliesLockTimeout(t *testing.T) {
+func TestPGOpenAppliesLockTimeout(t *testing.T) {
+	t.Setenv("KUT_MIGRATE_LOCK_TIMEOUT", "") // an inherited override must not change the default under test
 	db, ctx := scratchDB(t)
 	var got string
 	if err := db.QueryRowContext(ctx, `SHOW lock_timeout`).Scan(&got); err != nil || got != "30s" {
