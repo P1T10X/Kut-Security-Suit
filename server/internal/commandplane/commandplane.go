@@ -145,7 +145,7 @@ func (p *Plane) HandleCommandResult(ctx context.Context, deviceID, commandID str
 // Biçim: kanonik UUIDv4 (A1′ kimlik-birleştirme). Böylece bu id, `device_commands`
 // uuid birincil anahtarına açık olarak yazılabilir → imzalanan id = saklanan id =
 // teslim command_id = ack id = cmdlog anahtarı (tek sistem-geneli komut kimliği,
-// CONTRACTS INV-046/H11). Yeni bağımlılık yok: rastgele 16 bayta sürüm/varyant
+// CONTRACTS INV-046). Yeni bağımlılık yok: rastgele 16 bayta sürüm/varyant
 // bitleri yazılır.
 func newCommandID() (string, error) {
 	var b [16]byte
