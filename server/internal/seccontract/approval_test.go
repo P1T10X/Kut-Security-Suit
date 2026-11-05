@@ -27,7 +27,7 @@ func mintFn() func() (string, string) {
 	}
 }
 
-// B4/INV-040: onaylı + eşleşen istek → ALLOW + grant; grant isteğe bağlanır.
+// INV-040: onaylı + eşleşen istek → ALLOW + grant; grant isteğe bağlanır.
 func TestFinalizeAuthorizationHappy(t *testing.T) {
 	req := sampleRequest()
 	now := req.CreatedAt
@@ -53,7 +53,7 @@ func TestFinalizeRequesterEqualsApprover(t *testing.T) {
 	}
 }
 
-// APPROVAL_EXPIRED / POLICY_CHANGED / TARGET_CHANGED → DENY (M11).
+// APPROVAL_EXPIRED / POLICY_CHANGED / TARGET_CHANGED → DENY.
 func TestFinalizeBindingChecks(t *testing.T) {
 	req := sampleRequest()
 	now := req.CreatedAt
@@ -73,7 +73,7 @@ func TestFinalizeBindingChecks(t *testing.T) {
 	}
 }
 
-// B4 atomiklik: aynı onaya N concurrent finalize → tam 1 ALLOW (tek grant).
+// Atomiklik: aynı onaya N concurrent finalize → tam 1 ALLOW (tek grant).
 func TestFinalizeAtomicSingleGrant(t *testing.T) {
 	req := sampleRequest()
 	now := req.CreatedAt

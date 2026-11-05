@@ -236,7 +236,7 @@ func TestRateLimitPerTenantIsolation(t *testing.T) {
 }
 
 // TestRateLimiterEviction, atıl ve yeniden-dolacak limiter girdilerinin temizlenerek
-// map'in sınırsız büyümesinin önlendiğini doğrular (L3 — bellek tüketimi DoS'u).
+// map'in sınırsız büyümesinin önlendiğini doğrular (bellek tüketimi DoS'u).
 func TestRateLimiterEviction(t *testing.T) {
 	e := New(&Policy{RateLimitRPS: 5}) // boş allow + pasif aksiyon her kiracıda geçer
 

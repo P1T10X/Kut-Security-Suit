@@ -1,6 +1,6 @@
 package adminapi
 
-// Bu dosya, "Kiracı Duvarı I" kapsamındaki saf (test edilebilir) yardımcıları içerir:
+// Bu dosya, temel kiracı izolasyonu kapsamındaki saf (test edilebilir) yardımcıları içerir:
 // kiracı sunucu-tarafı oturumdan çözülür, istemci gövdesinden ASLA güvenilmez.
 
 import (
@@ -75,7 +75,7 @@ func normalizeTenantInput(raw string) (string, error) {
 }
 
 // resolveReadScope, kiracı-bölümlü bir kaynağı (agentsec grafı, AI av grafı) OKUYAN/YAZAN bir
-// isteğin kiracı kapsamını SUNUCU-TARAFI çözer (Kiracı Duvarı III):
+// isteğin kiracı kapsamını SUNUCU-TARAFI çözer:
 //
 //   - Kiracıya bağlı çağıran (callerTenant != ""): HER ZAMAN kendi kiracısı; istekteki değer
 //     (query/gövde) YOK SAYILIR — başka kiracıyı seçme yolu yoktur.

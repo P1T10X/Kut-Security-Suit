@@ -12,7 +12,7 @@ import (
 
 // ActionRequest, bir principal'ın NE yapmak istediğidir (CONTRACTS §1). Yetki
 // KANITI DEĞİLDİR. `RequestedImpact` yalnız HINT'tir; enforcement `EffectiveImpact`
-// ile server-side belirlenir (H6/INV-006).
+// ile server-side belirlenir (INV-006).
 type ActionRequest struct {
 	RequestID       string
 	TenantID        string
@@ -24,7 +24,7 @@ type ActionRequest struct {
 	CreatedAt       time.Time
 }
 
-// EffectiveImpact, etkiyi SERVER-SIDE, Action'dan deterministik türetir (H6). Caller
+// EffectiveImpact, etkiyi SERVER-SIDE, Action'dan deterministik türetir. Caller
 // düşüremez; bilinmeyen aksiyon en katı sınıfa (Destructive) düşer (scope.ImpactOf).
 func (r ActionRequest) EffectiveImpact() scope.Impact { return scope.ImpactOf(r.Action) }
 
@@ -54,7 +54,7 @@ func TargetsHash(targets []string) string {
 	return "th_" + hex.EncodeToString(h.Sum(nil))[:32]
 }
 
-// RequestHash, isteğin GÜVENLİK-İLGİLİ içeriğinin kanonik özetidir (M3): tenant,
+// RequestHash, isteğin GÜVENLİK-İLGİLİ içeriğinin kanonik özetidir: tenant,
 // principal, action, kanonik-targets. RequestID (kimlik) ve zaman DAHİL DEĞİLDİR —
 // Grant/Approval bu içerik-bağına kilitlenir. Alan sırası ve ayraçlar sabittir;
 // üretici ve doğrulayıcı aynı formu üretir.

@@ -111,7 +111,7 @@ func TestTouchHeartbeatStoresOSVersion(t *testing.T) {
 	}
 }
 
-// RecordAgentBinary (öz-tasdik, #4): ilk kayıt kurcalama değil; sürüm değişmeden
+// RecordAgentBinary (öz-tasdik): ilk kayıt kurcalama değil; sürüm değişmeden
 // hash değişirse kurcalama; sürüm de değişirse (meşru güncelleme) kurcalama değil.
 func TestRecordAgentBinaryTamperDetection(t *testing.T) {
 	s := New()

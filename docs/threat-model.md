@@ -1,12 +1,12 @@
-# Tehdit Modeli ve İnceleme Kararları
-# Threat Model & Review Decisions
+# Tehdit Modeli ve Tasarım Kararları
+# Threat Model & Design Decisions
 
 **Türkçe** · [English](#english)
 
-İlk mimari incelemesinde tespit edilen bulgular ve iskelette karşılığında
+Tehdit modelinde ele alınan riskler ve iskelette karşılığında
 alınan kararlar.
 
-| # | Bulgu | Karar / Karşılık | Nerede |
+| # | Risk | Karar / Karşılık | Nerede |
 |---|-------|------------------|--------|
 | 1 | Şema kırık (`policies` yok) + şifreli log sorgulanamaz | `policies` eklendi, FK düzeltildi; `event_logs` partitioned + JSONB, at-rest şifreleme | `db/schema.sql` |
 | 2 | Düz SHA-256 blind index kırılabilir (MAC ~48 bit) | HMAC(keyed) blind index (`*_bidx BYTEA`) | `db/schema.sql` |
@@ -39,10 +39,10 @@ alınan kararlar.
 
 # English
 
-Findings identified in the initial architecture review and the decisions taken in
+Risks addressed in the threat model and the decisions taken in
 response in the skeleton.
 
-| # | Finding | Decision / Response | Where |
+| # | Risk | Decision / Response | Where |
 |---|---------|---------------------|-------|
 | 1 | Schema broken (no `policies`) + encrypted log not queryable | `policies` added, FK fixed; `event_logs` partitioned + JSONB, at-rest encryption | `db/schema.sql` |
 | 2 | Plain SHA-256 blind index is breakable (MAC ~48 bit) | HMAC(keyed) blind index (`*_bidx BYTEA`) | `db/schema.sql` |

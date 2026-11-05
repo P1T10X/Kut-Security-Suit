@@ -86,7 +86,7 @@ func (s *Store) DropPartition(ctx context.Context, monthStart time.Time) error {
 }
 
 // PurgeArtifactsOlderThan, saklama penceresinden eski toplanan dosya
-// artefaktlarını (adli/IR, #4) siler ve silinen satır sayısını döner. artifacts
+// artefaktlarını (adli/IR) siler ve silinen satır sayısını döner. artifacts
 // tablosu partition'lanmadığından (dosya içeriği BYTEA) DELETE ile budanır.
 func (s *Store) PurgeArtifactsOlderThan(ctx context.Context, cutoff time.Time) (int, error) {
 	tag, err := s.pool.Exec(ctx, `DELETE FROM artifacts WHERE collected_at < $1`, cutoff)

@@ -9,7 +9,7 @@ const (
 	ResultNeedApproval DecisionResult = "NEED_APPROVAL"
 )
 
-// ReasonCode, karar/red gerekçesidir (CONTRACTS §2; M11 dahil). SOC'ta "neden grant
+// ReasonCode, karar/red gerekçesidir (CONTRACTS §2). SOC'ta "neden grant
 // verilmedi?" sorusunun deterministik cevabıdır.
 type ReasonCode string
 

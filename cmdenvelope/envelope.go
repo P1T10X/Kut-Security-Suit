@@ -15,7 +15,7 @@ import (
 )
 
 // CanonicalBytes, bir komut zarfının imza/doğrulama için deterministik kanonik
-// baytlarını üretir (SEC-005): alanlar 0x1f birim-ayracıyla bağlanır, parametreler
+// baytlarını üretir: alanlar 0x1f birim-ayracıyla bağlanır, parametreler
 // sıralı SHA-256 ile özetlenir (JSON anahtar sırası belirsizliğinden kaçınır).
 // Zaman alanları UnixNano int64 olarak yazılır (Postgres TIMESTAMPTZ µs yuvarlaması
 // imzayı sessizce kırardı — bu yüzden ns-tamsayı taşınır ve saklanır).

@@ -196,7 +196,7 @@ func TestLoadStrictKeyPermissions(t *testing.T) {
 	}
 	t.Setenv("KUT_SERVER_KEY", serverPath)
 
-	// Varsayılan (M4): fail-closed — güvensiz 0644 anahtar başlatmayı DURDURUR.
+	// Varsayılan: fail-closed — güvensiz 0644 anahtar başlatmayı DURDURUR.
 	t.Setenv("KUT_ALLOW_INSECURE_KEY_PERMISSIONS", "")
 	if _, err := Load(); err == nil {
 		t.Fatal("varsayılan fail-closed: güvensiz izinle hata dönmeliydi")

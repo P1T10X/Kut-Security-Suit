@@ -23,7 +23,7 @@ groups:
           description: "Son telemetri alımından {{ $value }} sn geçti."
 
       - alert: KUTClusterNotifyFallback
-        # Küme fan-out fallback artıyorsa DB NOTIFY erişiminde sorun var (#10 HA).
+        # Küme fan-out fallback artıyorsa DB NOTIFY erişiminde sorun var (HA).
         expr: increase(kut_cluster_notices_total{direction="fallback"}[10m]) > 0
         for: 10m
         labels: { severity: warning }

@@ -81,15 +81,15 @@ type PolicyProvider interface {
 
 The monolith (`app.go`) will be decomposed incrementally to avoid breaking current deployments.
 
-- **Phase 1: Extract Telemetry Plane**
+- **Step 1: Extract Telemetry Plane**
   - Move the agent gRPC handler, stream ingestion, OCSF normalization, and detection engine to `server/internal/telemetryplane/`.
   - Introduce `telemetryplane.New()` and initialize it inside `app.go`.
-- **Phase 2: Extract Command Plane**
+- **Step 2: Extract Command Plane**
   - Move response bus, task verification, and agent dispatching to `server/internal/commandplane/`.
   - Wire it to the Telemetry plane via `AlertSink`.
-- **Phase 3: Extract Control Plane & Intel Plane**
+- **Step 3: Extract Control Plane & Intel Plane**
   - Move Admin API, web console, PKI, and IoC updates to their respective planes.
-- **Phase 4: Coordinator `app.go`**
+- **Step 4: Coordinator `app.go`**
   - `app.go` becomes a lightweight dependency injection coordinator that wires interfaces together and starts plane lifecycles.
 
 ## 4. Architecture Diagram

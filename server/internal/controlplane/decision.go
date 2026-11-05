@@ -12,7 +12,7 @@ import (
 // highImpactActions, SUNUCU-TARAFI yüksek-etkili (yıkıcı) kabul edilen eylem
 // adlarıdır. Çağıranın beyan ettiği ActionImpact etiketine GÜVENİLMEZ: bu adlar her
 // zaman "destructive" muamelesi görür. Aksi halde bir saldırgan yıkıcı bir eylemi
-// ActionImpact="read"+RiskScore=0 ile etiketleyip OutcomePermit alabilirdi (M3).
+// ActionImpact="read"+RiskScore=0 ile etiketleyip OutcomePermit alabilirdi.
 var highImpactActions = map[string]bool{
 	"wipe": true, "erase": true, "erasedevice": true,
 	"isolate": true, "isolateendpoint": true,

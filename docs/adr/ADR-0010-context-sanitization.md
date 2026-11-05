@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-In the KUT Agentic Security Plane (`server/internal/aisec`), trust levels propagate monotonically downwards: `Tainted < Untrusted < Trusted` (INV-AG-001). While this design strictly prevents untrusted or tainted inputs from being implicitly elevated, it led to security finding **SEC-007**: there was no mechanism to sanitize or cleanse legitimately validated inputs. Once a context became Tainted, it remained permanently Tainted, leading to operational deadlocks where valid downstream workflows were blocked from execution.
+In the KUT Agentic Security Plane (`server/internal/aisec`), trust levels propagate monotonically downwards: `Tainted < Untrusted < Trusted`. While this design strictly prevents untrusted or tainted inputs from being implicitly elevated, it left a gap: there was no mechanism to sanitize or cleanse legitimately validated inputs. Once a context became Tainted, it remained permanently Tainted, leading to operational deadlocks where valid downstream workflows were blocked from execution.
 
 ## Decision
 We introduced a formal, capability-gated sanitization mechanism via `SanitizeContext` and `Sanitizer`:

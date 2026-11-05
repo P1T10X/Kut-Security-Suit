@@ -83,8 +83,8 @@ const (
 
 // NewWebhookNotifier, verilen HTTPS URL'e uyarı gönderen bir notifier kurar ve
 // arka plan gönderim işçisini başlatır. minSeverity altındaki uyarılar yok sayılır
-// (ör. "HIGH" → yalnız HIGH ve CRITICAL). URL https değilse hata döner (SEC-012
-// ile aynı gerekçe: uyarı içeriği güven sınırını düz-metin geçmemeli).
+// (ör. "HIGH" → yalnız HIGH ve CRITICAL). URL https değilse hata döner (uyarı içeriği
+// güven sınırını düz-metin geçmemeli).
 func NewWebhookNotifier(url, minSeverity, format string) (*WebhookNotifier, error) {
 	u, err := neturl.Parse(url)
 	if err != nil || u.Scheme != "https" || u.Host == "" {

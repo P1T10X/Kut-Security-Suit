@@ -20,7 +20,7 @@ func newExecutor(store SecurityStore, now time.Time) *GuardedExecutor {
 		func() time.Time { return now }, counterGen())
 }
 
-// B6/INV-046/041: geçerli grant → envelope mint (CommandID set), tek intent; ikinci
+// INV-046/041: geçerli grant → envelope mint (CommandID set), tek intent; ikinci
 // Execute aynı grant → ErrGrantReplayed (INV-003).
 func TestGuardedExecuteHappyPath(t *testing.T) {
 	req := sampleRequest()
@@ -44,7 +44,7 @@ func TestGuardedExecuteHappyPath(t *testing.T) {
 	}
 }
 
-// H2: envelope GERÇEK GrantID taşımaz; opak, deterministik korelasyon.
+// envelope GERÇEK GrantID taşımaz; opak, deterministik korelasyon.
 func TestEnvelopeCarriesNoGrantID(t *testing.T) {
 	req := sampleRequest()
 	now := req.CreatedAt

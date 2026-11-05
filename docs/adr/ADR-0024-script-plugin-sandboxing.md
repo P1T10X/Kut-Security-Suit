@@ -1,4 +1,4 @@
-# ADR-0024: Script & Plugin Sandboxing Guardrail Engine (SEC-007)
+# ADR-0024: Script & Plugin Sandboxing Guardrail Engine
 
 ## Durum
 Kabul Edildi

@@ -11,7 +11,7 @@ import (
 // edge node bulunmadığında ve tenant için bölge-dışı yönlendirmeye AÇIKÇA izin
 // verilmediğinde döner. Egemen (sovereign) fabric'te bir tenant'ın telemetrisinin
 // sessizce bölge-dışına yönlendirilmesi veri ikameti (residency) ihlalidir; bu
-// nedenle varsayılan fail-closed'dur (L1).
+// nedenle varsayılan fail-closed'dur.
 var ErrResidencyFallbackBlocked = errors.New("cross-region fallback blocked by data-residency policy")
 
 // RegionID represents a geographical or logical region identifier.

@@ -13,7 +13,7 @@ import (
 )
 
 // SignedCommandEnvelope wraps an authorized command with a cryptographic signature,
-// ensuring non-repudiation, integrity, and anti-replay (SEC-002 & SEC-005).
+// ensuring non-repudiation, integrity, and anti-replay.
 type SignedCommandEnvelope struct {
 	CommandID string         `json:"command_id"`
 	DeviceID  string         `json:"device_id"`
@@ -27,7 +27,7 @@ type SignedCommandEnvelope struct {
 }
 
 // CanonicalSigningBytes produces deterministic canonical bytes for signing or verification.
-// Resolves SEC-005: avoids non-deterministic JSON key serialization issues by computing
+// Avoids non-deterministic JSON key serialization issues by computing
 // a sorted SHA-256 hash of parameters and binding all fields with explicit unit separators.
 //
 // Kodlama, paylaşılan (internal OLMAYAN) cmdenvelope paketine DELEGE edilir; böylece ajan
@@ -86,7 +86,7 @@ func (s *CommandSigner) Sign(cmdID string, req CommandRequest, now time.Time) (S
 }
 
 // CommandVerifier verifies signed command envelopes using an Ed25519 public key.
-// Anti-replay (SEC-005): her başarıyla doğrulanan nonce TÜKETİLİR (kaydedilir);
+// Anti-replay: her başarıyla doğrulanan nonce TÜKETİLİR (kaydedilir);
 // aynı nonce TTL penceresi içinde yeniden sunulursa reddedilir. Böylece yakalanan
 // geçerli bir zarf süresi dolana dek tekrar oynatılamaz (önceki sürüm yalnız
 // nonce'un boş-olmadığını kontrol ediyor, tüketmiyordu).

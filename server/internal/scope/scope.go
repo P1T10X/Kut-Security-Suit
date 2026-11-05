@@ -215,7 +215,7 @@ const (
 
 // maybeSweepLocked, atıl/dolu rate-limiter girdilerini temizler. Çağıran e.rlMu'yu
 // tutmalıdır. Taramalar limiterSweepEvery ile sınırlıdır; böylece map, saldırganın
-// kiracı/aksiyon uzayını sondalayarak sınırsız büyütmesine karşı sınırlanır (L3).
+// kiracı/aksiyon uzayını sondalayarak sınırsız büyütmesine karşı sınırlanır.
 func (e *Engine) maybeSweepLocked(now time.Time) {
 	if !e.lastSweep.IsZero() && now.Sub(e.lastSweep) < limiterSweepEvery {
 		return

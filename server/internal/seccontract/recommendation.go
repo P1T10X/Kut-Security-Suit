@@ -4,7 +4,7 @@ import "time"
 
 // AIRecommendation, değişmez bir AI önerisidir (CONTRACTS §12). Yetki DEĞİLDİR;
 // yalnız Output Validator + Tool/Capability Firewall'dan geçip ACCEPTED olduktan
-// sonra ActionRequest'e dönüşür. Authorization terminolojisi (APPROVED) KULLANILMAZ (H1).
+// sonra ActionRequest'e dönüşür. Authorization terminolojisi (APPROVED) KULLANILMAZ.
 type AIRecommendation struct {
 	RecommendationID string
 	IncidentID       string

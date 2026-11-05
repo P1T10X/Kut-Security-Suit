@@ -48,7 +48,7 @@ BİLİNÇLİ olarak açık bırakılır. Gerekçeler birim dosyasında satır-sa
   reddedilmeli (ajanın imzalı-script/OTA kapıları bunu tamamlar).
 - **Protected Process Light (PPL) / ELAM:** ajanın kurcalamaya karşı korunması için
   hedeflenen ileri faz (sürücü + ELAM sertifikası) — mevcut watchdog + öz-tasdik
-  (#4) yazılım-seviyesi ilk savunmadır.
+  yazılım-seviyesi ilk savunmadır.
 - **Uninstall koruması:** servis silme/durdurma için yönetici + (ileride) tamper
   parolası.
 
@@ -66,7 +66,7 @@ BİLİNÇLİ olarak açık bırakılır. Gerekçeler birim dosyasında satır-sa
 - CA özel anahtarı ve imzalama anahtarları da benzer şekilde bir KMS/Vault'ta
   tutulmalı (dosya-tabanlı erişim veya kısa-ömürlü materyal).
 - Alan-şifreleme (at-rest) + KDF zaten uygulanır; anahtar rotasyonu için keyring
-  (#9) mevcuttur.
+  mevcuttur.
 
 ## 6. Ağ
 

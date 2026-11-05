@@ -31,7 +31,7 @@ JSON ağırlık formatına çevirin. Çalışan ikiliye, `go.mod`'a, CGo duruşu
 
 ```bash
 # 1) Modeli çevir + imzala (öznitelik ölçekleme eğitimden gelir; -sign-key ile
-#    <out>.sig fail-closed Ed25519 imzası yazılır — imzasız model YÜKLENMEZ, SEC C-7).
+#    <out>.sig fail-closed Ed25519 imzası yazılır — imzasız model YÜKLENMEZ).
 go run ./tools/onnx2json -in model.onnx -out anomaly-model.json \
     -mean 0,12,0,3 -std 1,6,4,2 -sign-key ./anomaly-keys/priv
 #    → anomaly-model.json + anomaly-model.json.sig üretir
@@ -56,8 +56,8 @@ etiketiyle ayrılmış bir backend eklenebilir — **varsayılan derlemeyi saf-G
 - `agent/internal/anomaly/onnx_stub.go` (`//go:build !onnx`): `NewONNXScorer(...)` "ONNX
   bu derlemede yok" hatası döndürür (dış bağımlılık yok → varsayılan derleme saf-Go).
 - `agent/internal/anomaly/onnx_backend.go` (`//go:build onnx`): `onnxruntime_go` import
-  eder, aynı imzayı uygular ve **yüklemeden önce Ed25519 imzasını doğrular** (SEC C-7
-  fail-closed korunur).
+  eder, aynı imzayı uygular ve **yüklemeden önce Ed25519 imzasını doğrular**
+  (fail-closed korunur).
 
 Kurallar: CGo import'u YALNIZ `//go:build onnx` dosyasında olmalı; `-tags onnx` ne
 `go test ./...`'e ne de sürüm scriptine eklenmeli; ayrı, cross-compile edilmeyen bir CI
@@ -90,7 +90,7 @@ engine's portable JSON weight format — **zero** impact on the shipped binary, 
 posture, or CI.
 
 ```bash
-# convert + sign (fail-closed Ed25519; unsigned models are refused, SEC C-7)
+# convert + sign (fail-closed Ed25519; unsigned models are refused)
 go run ./tools/onnx2json -in model.onnx -out anomaly-model.json \
     -mean 0,12,0,3 -std 1,6,4,2 -sign-key ./anomaly-keys/priv
 export KUT_ANOMALY_MODEL=/path/anomaly-model.json
@@ -107,7 +107,7 @@ For arbitrary ONNX graphs, add a build-tag-split backend behind the `Scorer` int
 (`Score(Features) float64`), keeping the default build pure-Go: an `//go:build !onnx` stub
 (`NewONNXScorer` returns "not compiled in", no external dep) plus an `//go:build onnx` file
 importing `onnxruntime_go` that **verifies the Ed25519 signature before loading** (preserves
-the SEC C-7 fail-closed rule). The CGo import must live only in the tagged file; never add
+the fail-closed rule). The CGo import must live only in the tagged file; never add
 `-tags onnx` to `go test ./...` or the release script; build the tagged artifact in a
 separate, non-cross-compiled CI lane. Risk: MEDIUM-HIGH (native library distribution) —
 only when genuinely needed.

@@ -1,8 +1,8 @@
 // Package agentclock, sunucu-çıpalı bir saat sağlar.
 //
 // Politika zaman pencereleri yerel DUVAR saatine göre değerlendirilemez: SYSTEM
-// yetkili bir kullanıcı saati değiştirerek mesai-dışı yasağını atlatabilir
-// (inceleme #3). Bunun yerine ajan, her heartbeat'te sunucudan gelen zamanı
+// yetkili bir kullanıcı saati değiştirerek mesai-dışı yasağını atlatabilir.
+// Bunun yerine ajan, her heartbeat'te sunucudan gelen zamanı
 // çıpa alır ve o çıpadan itibaren MONOTONİK geçen süreyle ilerler. Duvar saati
 // değişse bile monotonik geçen süre etkilenmez.
 package agentclock

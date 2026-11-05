@@ -413,7 +413,7 @@ func NewAgentHandler(devices DeviceRegistry, events EventSink, policies PolicyPr
 }
 
 // Heartbeat, yaşam sinyalini işler. Yanıt SUNUCU SAATİNİ taşır — ajan, politika
-// zaman pencerelerini bu çıpaya göre değerlendirir (inceleme #3).
+// zaman pencerelerini bu çıpaya göre değerlendirir.
 func (h *AgentHandler) Heartbeat(ctx context.Context, req *kutv1.HeartbeatRequest) (*kutv1.HeartbeatResponse, error) {
 	deviceID, err := DeviceIDFromContext(ctx)
 	if err != nil {
@@ -439,7 +439,7 @@ func (h *AgentHandler) Heartbeat(ctx context.Context, req *kutv1.HeartbeatReques
 		h.publishDevice(nt, deviceID)
 	}
 
-	// Öz-tasdik (#4): ajanın ikili hash'i sürüm değişmeden değiştiyse (takas/yama)
+	// Öz-tasdik: ajanın ikili hash'i sürüm değişmeden değiştiyse (takas/yama)
 	// KRİTİK kurcalama olayı üret. Best-effort; heartbeat'i kesmez.
 	if bh := req.GetBinaryHash(); bh != "" {
 		if tampered, terr := h.devices.RecordAgentBinary(ctx, deviceID, agentVersion, bh); terr == nil && tampered {
@@ -835,7 +835,7 @@ func streamPolicyLoop(ctx context.Context, deviceID, currentVersion string,
 }
 
 // CheckUpdate, OTA güncelleme manifestosunu döner. Manifesto İMZALIDIR; ajan
-// indirmeden önce imzayı gömülü public key ile doğrular (inceleme #4).
+// indirmeden önce imzayı gömülü public key ile doğrular.
 func (h *AgentHandler) CheckUpdate(ctx context.Context, req *kutv1.UpdateCheckRequest) (*kutv1.UpdateManifest, error) {
 	deviceID, err := DeviceIDFromContext(ctx)
 	if err != nil {

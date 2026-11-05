@@ -17,7 +17,7 @@ import (
 )
 
 // serverOptions, kaynak-tükenmesi (DoS) sınırlarını içeren temel gRPC seçenekleri
-// döner (SEC-007). Ele geçirilmiş/kötü niyetli tek bir ajan sunucuyu boğamamalı.
+// döner. Ele geçirilmiş/kötü niyetli tek bir ajan sunucuyu boğamamalı.
 func serverOptions(tc *tls.Config) []grpc.ServerOption {
 	return []grpc.ServerOption{
 		grpc.Creds(credentials.NewTLS(tc)),

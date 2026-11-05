@@ -4,7 +4,7 @@
 // PolicyBundle'ı buradaki domain tiplerine çevirir. Böylece motor, proto
 // üretimi olmadan da derlenip test edilebilir. Zaman değerlendirmesi DAİMA
 // dışarıdan verilen (sunucu-çıpalı) `now` ile yapılır; yerel duvar saatine
-// güvenilmez (inceleme #3).
+// güvenilmez.
 package policy
 
 import (
@@ -91,7 +91,7 @@ func (e *Engine) EvaluateProcess(processPathOrName string, now time.Time) Decisi
 
 // EvaluateAlways, yalnız "her zaman yasak" (RuleAppBlockAlways) kurallarını
 // değerlendirir; zaman gerektirmez. Saat sunucuya senkronize DEĞİLKEN zaman
-// pencereli kurallar güvenle uygulanamaz (inceleme #3) — enforcement bu duruma
+// pencereli kurallar güvenle uygulanamaz — enforcement bu duruma
 // düştüğünde bu metoda başvurur, böylece her-zaman-yasak kuralları yine uygulanır.
 func (e *Engine) EvaluateAlways(processPathOrName string) Decision {
 	for i := range e.bundle.Rules {

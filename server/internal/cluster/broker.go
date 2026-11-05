@@ -1,4 +1,4 @@
-// Package cluster, C2 sunucusunu yatay ölçeklenebilir (çok-düğümlü) kılar (#10).
+// Package cluster, C2 sunucusunu yatay ölçeklenebilir (çok-düğümlü) kılar.
 //
 // Tek-düğüm modunda canlı konsol akışı (SSE) bellek-içi bir yayın-abone ile
 // çalışır: bir ajanın olayı YALNIZCA o ajanın bağlı olduğu düğümdeki abonelere
@@ -64,7 +64,7 @@ func New(appCtx context.Context, bus NotifyBus, local LocalDeliverer, channel st
 		onPublished: noop, onReceived: noop, onFallback: noop}
 }
 
-// SetMetrics, fan-out gözlemlenebilirlik kancalarını bağlar (#10). nil kanca no-op.
+// SetMetrics, fan-out gözlemlenebilirlik kancalarını bağlar. nil kanca no-op.
 func (b *Broker) SetMetrics(onPublished, onReceived, onFallback func()) {
 	set := func(dst *func(), fn func()) {
 		if fn != nil {

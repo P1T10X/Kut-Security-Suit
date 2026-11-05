@@ -159,7 +159,7 @@ func Load() (*Config, error) {
 		}
 	}
 
-	// Anahtar dosyası izinleri VARSAYILAN olarak fail-closed zorunludur (M4): güvensiz
+	// Anahtar dosyası izinleri VARSAYILAN olarak fail-closed zorunludur: güvensiz
 	// izin (ör. 0644) başlatmayı DURDURUR. Operatör bilerek kabul ediyorsa
 	// KUT_ALLOW_INSECURE_KEY_PERMISSIONS=1 ile gevşetebilir (önerilmez → yalnız uyarı).
 	// Önceki sürüm varsayılan uyarı-only idi (fail-open); projenin fail-closed etiğine

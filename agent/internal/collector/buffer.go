@@ -2,8 +2,8 @@
 //
 // Ajan çevrimdışıyken olaylar burada birikir; bağlantı gelince toplu gönderilir.
 // Sunucu, kabul ettiği son sıra numarasını (EventAck) döner ve tampon yalnız
-// ONAYLANANLARI siler — böylece geçici bağlantı kaybında olay kaybolmaz
-// (inceleme #9). Tampon sınırlıdır: kapasite aşılırsa en eski olaylar düşürülür
+// ONAYLANANLARI siler — böylece geçici bağlantı kaybında olay kaybolmaz.
+// Tampon sınırlıdır: kapasite aşılırsa en eski olaylar düşürülür
 // ve sayaçla raporlanır (uzun süreli çevrimdışılıkta kaçınılmaz veri kaybı).
 package collector
 

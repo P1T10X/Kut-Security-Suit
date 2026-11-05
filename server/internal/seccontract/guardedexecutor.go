@@ -7,14 +7,14 @@ import (
 	"kut.corp/suite/server/internal/scope"
 )
 
-// guardedexecutor.go — CONTRACTS §13 (H3/B6). Durum-değiştiren tek merkezi sınır.
+// guardedexecutor.go — CONTRACTS §13. Durum-değiştiren tek merkezi sınır.
 // GuardedExecutor, ATOMİK security transition'ın SAHİBİDİR: capability kontrolü +
 // CommandID üretimi + (grant consume + ExecutionIntent) atomik işlemi + envelope mint.
 // Storage impl'leri authorization'ı yeniden uygulamaz; alt işlemler (consume/create)
 // dışarıya ayrı ayrı sunulmaz — yalnız SecurityStore'un atomik metodu üzerinden.
 
 // SecurityStore, grant tüketimi ile ExecutionIntent yaratımını TEK ATOMİK işlemde
-// yapar (B5/INV-041; aynı persistence boundary). İkisi birlikte başarılı olur ya da
+// yapar (INV-041; aynı persistence boundary). İkisi birlikte başarılı olur ya da
 // hiçbiri; validate+CAS tek commit-point'tir (INV-047).
 type SecurityStore interface {
 	ConsumeGrantAndCreateIntent(g AuthorizationGrant, req ActionRequest, effectivePolicyHash string, intent ExecutionIntent, now time.Time) error
@@ -70,7 +70,7 @@ func (e *GuardedExecutor) Execute(req ActionRequest, grant AuthorizationGrant) (
 	}
 	return CommandEnvelope{
 		CommandID:                  commandID,
-		AuthorizationCorrelationID: CorrelationID(grant.GrantID), // opak; GrantID değil (H2)
+		AuthorizationCorrelationID: CorrelationID(grant.GrantID), // opak; GrantID değil
 		RequestID:                  req.RequestID,
 		TenantID:                   req.TenantID,
 		DeviceID:                   firstTarget(req.Targets),
@@ -88,7 +88,7 @@ func firstTarget(targets []string) string {
 }
 
 // MemSecurityStore, SecurityStore'un bellek-içi ATOMİK gerçekleştirimidir: consume +
-// intent TEK kilit altında (aynı boundary → B5/INV-041). ikisi birlikte ya da hiç.
+// intent TEK kilit altında (aynı boundary → INV-041). ikisi birlikte ya da hiç.
 type MemSecurityStore struct {
 	mu       sync.Mutex
 	consumed map[string]bool

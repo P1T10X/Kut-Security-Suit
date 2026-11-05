@@ -41,7 +41,7 @@ const autonomousProposer = "autonomous-response-agent"
 // (authz / secgateway / privman / GuardedExecutor) doğrular: onaylayan kimliği+rolü,
 // tenant eşleşmesi, blast-radius. PRODUCTION wiring'de bu adaptör ENJEKTE EDİLMELİDİR;
 // nil ise ExecuteAction fail-closed reddeder (yüksek-etkili aksiyon boş-olmayan tek
-// string ile YÜRÜTÜLEMEZ — C1).
+// string ile YÜRÜTÜLEMEZ).
 type ActionAuthorizer interface {
 	AuthorizeResponse(ctx context.Context, action ResponseAction, approver string) error
 }
@@ -112,7 +112,7 @@ func (a *ResponseAgent) ProposePlan(ctx context.Context, tenantID string, incide
 			TenantID: tenantID,
 			// TÜM yanıt aksiyonları yüksek-etkilidir (Isolate/Kill/Quarantine/
 			// BlockHash/RevokeSession) → istisnasız insan onayı + kanonik yetki
-			// gerektirir. BlockHash/RevokeSession'ın onaysız auto-yürütülmesi C1'de
+			// gerektirir. BlockHash/RevokeSession'ın onaysız auto-yürütülmesi burada
 			// kapatıldı.
 			RequiresApproval: true,
 			Reason:           fmt.Sprintf("Auto-generated mitigation for finding (Hypothesis: %s)", f.HypothesisID),
@@ -124,7 +124,7 @@ func (a *ResponseAgent) ProposePlan(ctx context.Context, tenantID string, incide
 	return plan, nil
 }
 
-// ExecuteAction executes a specific response action — FAIL-CLOSED (C1).
+// ExecuteAction executes a specific response action — FAIL-CLOSED.
 // Yüksek-etkili bir yanıt aksiyonu YALNIZ şu koşullar hep birlikte sağlanırsa
 // yürütülür: (1) tenant kimliği boş değil; (2) boş-olmayan bir onaylayan var;
 // (3) onaylayan, aksiyonu öneren kimlikten FARKLI (dual-control / dört-göz);

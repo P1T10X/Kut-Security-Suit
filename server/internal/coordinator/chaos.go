@@ -11,7 +11,7 @@ import (
 // FaultAuthorizer, kaos (chaos) hata enjeksiyonunu kapılar. Enjeksiyon bir bölgeyi
 // çevrimdışı işaretleyip failover'ı zorlayabildiği için operasyonel olarak yıkıcıdır;
 // bu nedenle açıkça yetkilendirilmelidir. nil yetkilendirici => fail-closed (reddet),
-// C1/H1 desenindeki gibi.
+// diğer yetkilendiricilerdeki gibi.
 type FaultAuthorizer interface {
 	AuthorizeFault(ctx context.Context, actor string, fault ChaosFaultType, target string) error
 }

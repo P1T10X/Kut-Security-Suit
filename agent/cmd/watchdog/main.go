@@ -5,7 +5,7 @@
 // çalıştırmalar arasında swap eder; yeni sürüm deneme penceresinde çökerse
 // rollback eder.
 //
-// NOT (inceleme #5): Bu, kaza sonucu sonlanmalara karşı ilk savunmadır; SYSTEM
+// NOT: Bu, kaza sonucu sonlanmalara karşı ilk savunmadır; SYSTEM
 // yetkili müdahaleye karşı gerçek koruma ayrı bir katmandır (sürücü + PPL/ELAM).
 package main
 
@@ -59,7 +59,7 @@ func main() {
 	runner := watchdog.NewExecRunner(agentBin)
 	swapper := watchdog.NewFileSwapper(agentBin, stageDir)
 	// OTA imza anahtarı yapılandırılmışsa, swap-anı YENİDEN doğrulama kancasını kur: staged
-	// ikili, swap'tan hemen önce imza + SHA-256 ile yeniden doğrulanır (H4 — ayrı SYSTEM
+	// ikili, swap'tan hemen önce imza + SHA-256 ile yeniden doğrulanır (ayrı SYSTEM
 	// süreci kurcalanmış/forge bir ikiliyi çalıştırmaz). KUT_UPDATE_PUBKEY ajanla aynı env.
 	if raw := strings.TrimSpace(os.Getenv("KUT_UPDATE_PUBKEY")); raw != "" {
 		var pubs []ed25519.PublicKey

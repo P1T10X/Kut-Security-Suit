@@ -53,7 +53,7 @@ message HeartbeatRequest {
   DeviceStatus self_reported_status = 3;
   ResourceMetrics metrics = 4; // Lokal ML/baseline için hafif metrikler.
   // binary_hash, ajanın kendi çalışan ikilisinin SHA-256'sıdır (öz-tasdik / tedarik
-  // zinciri bütünlüğü, #4). Sürüm değişmeden hash değişirse takas/yamalanmış ikili
+  // zinciri bütünlüğü). Sürüm değişmeden hash değişirse takas/yamalanmış ikili
   // (olası kurcalama) sinyali. Boş = ajan öz-tasdiki bildirmiyor.
   string binary_hash = 5;
   // acked_command_ids, ajanın YÜRÜTMEYİ tamamladığı komutların kimlikleridir

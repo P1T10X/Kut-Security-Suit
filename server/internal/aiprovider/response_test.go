@@ -45,7 +45,7 @@ func TestProposePlan(t *testing.T) {
 		if action.TenantID != tenantID {
 			t.Errorf("aksiyonda beklenen tenantID %s, alınan %s", tenantID, action.TenantID)
 		}
-		// TÜM yanıt aksiyonları onay gerektirmeli (BlockHash/RevokeSession dahil — C1).
+		// TÜM yanıt aksiyonları onay gerektirmeli (BlockHash/RevokeSession dahil).
 		if !action.RequiresApproval {
 			t.Errorf("tüm yanıt aksiyonları onay gerektirmeli, %s gerektirmiyor", action.Type)
 		}

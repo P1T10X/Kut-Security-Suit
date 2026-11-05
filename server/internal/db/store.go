@@ -52,7 +52,7 @@ func (s *Store) Ping(ctx context.Context) error {
 	return s.pool.Ping(ctx)
 }
 
-// NotifyChannel, bir Postgres LISTEN/NOTIFY kanalına yük gönderir (#10 küme
+// NotifyChannel, bir Postgres LISTEN/NOTIFY kanalına yük gönderir (küme
 // fan-out). Kanal adı tanımlayıcı olduğundan bağlanamaz; ancak pg_notify(text,
 // text) fonksiyonu her iki argümanı da parametre olarak alarak enjeksiyona karşı
 // güvenlidir. Yük 8000 bayttan küçük olmalıdır (Postgres NOTIFY sınırı).
@@ -207,7 +207,7 @@ func (s *Store) SaveCertificate(ctx context.Context, c enroll.CertRecord) error 
 }
 
 // DeviceHasActiveCert, cihazın iptal edilmemiş (revoked_at IS NULL) en az bir
-// sertifikası var mı. Yenileme iptal-bypass korumasında (SEC-002) kullanılır —
+// sertifikası var mı. Yenileme iptal-bypass korumasında kullanılır —
 // revocation cache yerine KESİN DB kontrolü.
 func (s *Store) DeviceHasActiveCert(ctx context.Context, deviceID string) (bool, error) {
 	const q = `SELECT EXISTS(SELECT 1 FROM agent_certificates WHERE device_id = $1::uuid AND revoked_at IS NULL)`

@@ -9,8 +9,8 @@ import (
 	"os"
 )
 
-// LoadModelSigned, modeli YALNIZ Ed25519 imzası doğrulandıktan sonra yükler
-// (SEC C-7). İmza, model JSON baytları üzerinedir ve `<modelPath>.sig` dosyasında
+// LoadModelSigned, modeli YALNIZ Ed25519 imzası doğrulandıktan sonra yükler.
+// İmza, model JSON baytları üzerinedir ve `<modelPath>.sig` dosyasında
 // base64 olarak beklenir. Modeli yazabilen ama imzalayamayan bir saldırgan,
 // tespiti sıfırlayarak sömürüyü gizleyemez (fail-closed). İmza/anahtar
 // geçersizse hata döner ve çağıran istatistiksel scorer'a düşmelidir.

@@ -2391,7 +2391,7 @@
         ["Olay (alınan)","events_ingested","var(--muted)"],
         ["Giriş (başarısız)","login_failure","var(--warn)"]
       ];
-      // Yatay ölçekleme (#10): küme fan-out sayaçlarını YALNIZCA trafik varken göster
+      // Yatay ölçekleme: küme fan-out sayaçlarını YALNIZCA trafik varken göster
       // (tek-düğüm konsolunu kalabalıklaştırma). Fallback>0 DB NOTIFY sorununa işaret
       // eder, bu yüzden kritik renkle vurgulanır.
       if(((c.cluster_received||0)+(c.cluster_published||0)+(c.cluster_fallback||0))>0){

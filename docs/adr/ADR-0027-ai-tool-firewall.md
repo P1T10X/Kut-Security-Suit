@@ -1,4 +1,4 @@
-# ADR-0027: AI Agent Tool Firewall Guardrail (SEC-008)
+# ADR-0027: AI Agent Tool Firewall Guardrail
 
 ## Durum
 Kabul Edildi

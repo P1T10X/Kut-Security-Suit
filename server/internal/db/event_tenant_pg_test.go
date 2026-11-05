@@ -1,7 +1,7 @@
 package db
 
-// QueryEvents'in kayıtlı kiracıyı döndürmesi (arka plan analizörlerinin kiracı atfı için,
-// Kiracı Duvarı III) — gerçek PostgreSQL'e karşı. KUT_DATABASE_URL yoksa ATLANIR.
+// QueryEvents'in kayıtlı kiracıyı döndürmesi (arka plan analizörlerinin kiracı atfı için)
+// — gerçek PostgreSQL'e karşı. KUT_DATABASE_URL yoksa ATLANIR.
 
 import (
 	"testing"

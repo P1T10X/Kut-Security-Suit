@@ -136,7 +136,7 @@ func TestSourceConfigResolveTenant(t *testing.T) {
 }
 
 // kiracısız bağlayıcı (dağıtım kiracısı acme) acme ile damgalanır ama cihaz kimliği
-// Kiracı Duvarı III öncesiyle aynı kalır; açık farklı kiracıya bağlı bağlayıcı ad-alanlanır.
+// kiracı damgalama öncesiyle aynı kalır; açık farklı kiracıya bağlı bağlayıcı ad-alanlanır.
 func TestConnectorBindingKeepsLegacyDeviceID(t *testing.T) {
 	legacy, err := SourceConfig{Name: "fw"}.ResolveBinding("acme", false)
 	if err != nil || legacy.Tenant != "acme" || legacy.IDTenant != "" {
