@@ -347,7 +347,7 @@ func Write(w io.Writer, s Snapshot) {
 	fmt.Fprintf(w, "# TYPE kut_bits_gated_total counter\n")
 	fmt.Fprintf(w, "kut_bits_gated_total %d\n", bitsGated.Load())
 
-	fmt.Fprintf(w, "# HELP kut_cluster_notices_total Küme fan-out bildirimleri (yön etiketli, #10 HA).\n")
+	fmt.Fprintf(w, "# HELP kut_cluster_notices_total Küme fan-out bildirimleri (yön etiketli, HA).\n")
 	fmt.Fprintf(w, "# TYPE kut_cluster_notices_total counter\n")
 	fmt.Fprintf(w, "kut_cluster_notices_total{direction=\"published\"} %d\n", clusterPublished.Load())
 	fmt.Fprintf(w, "kut_cluster_notices_total{direction=\"received\"} %d\n", clusterReceived.Load())
